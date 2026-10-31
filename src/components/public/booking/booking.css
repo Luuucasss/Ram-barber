@@ -1,0 +1,224 @@
+/*
+ * Booking wizard motion. Only transform / opacity / filter are animated.
+ * Springs are approximated with linear() (falls back to a strong ease-out where unsupported).
+ * Reduced motion: the global rule in globals.css collapses durations; the block at the end
+ * also swaps every spatial animation for a plain fade so nothing slides.
+ */
+
+:root {
+  --rb-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --rb-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  /* Underdamped spring (zeta 0.62) — ~8% overshoot, settles quietly. */
+  --rb-spring: linear(0, 0.0779, 0.2553, 0.4655, 0.6647, 0.8291, 0.9496, 1.0272, 1.0687, 1.0831, 1.0796, 1.0662, 1.0489, 1.0318, 1.0172, 1.0063, 0.999, 0.9949, 0.9932, 0.9932, 0.9942, 0.9956, 0.997, 0.9983, 0.9993, 1);
+  /* Bouncier spring (zeta 0.5) — reserved for the one-time success moment. */
+  --rb-spring-pop: linear(0, 0.0616, 0.2127, 0.4078, 0.6105, 0.795, 0.9455, 1.0553, 1.1244, 1.1574, 1.1619, 1.1462, 1.1184, 1.0857, 1.0532, 1.0247, 1.0023, 0.9866, 0.9774, 0.9737, 0.9742, 0.9775, 0.9824, 0.9878, 0.9929, 0.9973, 1.0006, 1.0028, 1.004, 1.0043, 1.0034, 1.0017, 1);
+}
+
+/* ---------- Step transitions ---------- */
+.rb-step {
+  animation: rb-step-fwd 520ms var(--rb-ease-out) both;
+}
+.rb-step[data-dir="back"] {
+  animation-name: rb-step-back;
+}
+@keyframes rb-step-fwd {
+  from { opacity: 0; transform: translate3d(28px, 0, 0); filter: blur(3px); }
+  45% { opacity: 1; filter: blur(0); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes rb-step-back {
+  from { opacity: 0; transform: translate3d(-28px, 0, 0); filter: blur(3px); }
+  45% { opacity: 1; filter: blur(0); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+/* Staggered children inside a step (cards, rows). Short gaps: decoration never blocks input. */
+.rb-stagger > * {
+  animation: rb-rise 420ms var(--rb-ease-out) both;
+  animation-delay: calc(min(var(--i, 0), 10) * 45ms + 60ms);
+}
+@keyframes rb-rise {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Slots re-cascade when the day changes (grid is keyed by date). */
+.rb-slot {
+  animation: rb-slot-in 300ms var(--rb-ease-out) both;
+  animation-delay: calc(min(var(--i, 0), 14) * 18ms);
+}
+@keyframes rb-slot-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- Tactile press ---------- */
+.rb-press {
+  transition:
+    transform 160ms var(--rb-ease-out),
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    box-shadow 200ms ease,
+    opacity 200ms ease;
+}
+.rb-press:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Selected card: a quick spring "settle" so the choice registers before auto-advancing. */
+.rb-picked {
+  animation: rb-picked 360ms var(--rb-ease-out) both;
+}
+@keyframes rb-picked {
+  from { transform: scale(0.97); }
+  to { transform: none; }
+}
+
+/* ---------- Progress ---------- */
+.rb-progress-fill {
+  transform-origin: left center;
+  transition: transform 560ms var(--rb-ease-in-out);
+}
+.rb-progress-marker {
+  transition: transform 560ms var(--rb-ease-in-out);
+}
+.rb-progress-marker svg {
+  animation: rb-turn 9s linear infinite;
+}
+@keyframes rb-turn {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Skeleton ---------- */
+.rb-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-card);
+}
+.rb-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  animation: rb-sweep 1.3s linear infinite;
+}
+@keyframes rb-sweep {
+  to { transform: translateX(100%); }
+}
+
+/* ---------- Notice (slot taken etc.) ---------- */
+.rb-notice {
+  animation: rb-notice 420ms var(--rb-ease-out) both;
+}
+@keyframes rb-notice {
+  from { opacity: 0; transform: translate3d(0, -8px, 0) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- Feedback swap (e.g. "¡Link copiado!") ---------- */
+.rb-swap {
+  animation: rb-swap 220ms var(--rb-ease-out) both;
+}
+@keyframes rb-swap {
+  from { opacity: 0; filter: blur(2px); transform: translate3d(0, 3px, 0); }
+  to { opacity: 1; filter: none; transform: none; }
+}
+
+/* ---------- Success: halo burst + rose pop ---------- */
+.rb-burst-halo {
+  animation: rb-halo-in 1400ms var(--rb-ease-out) both;
+}
+@keyframes rb-halo-in {
+  from { opacity: 0; transform: scale(0.55) rotate(-25deg); }
+  35% { opacity: 0.9; }
+  to { opacity: 0.38; transform: scale(1) rotate(0deg); }
+}
+.rb-burst-halo > svg {
+  animation: rb-turn 90s linear 1.4s infinite;
+}
+.rb-burst-ring {
+  animation: rb-ring 1100ms var(--rb-ease-out) both;
+}
+.rb-burst-ring[data-late] {
+  animation-delay: 180ms;
+}
+@keyframes rb-ring {
+  from { opacity: 0.9; transform: scale(0.6); }
+  to { opacity: 0; transform: scale(1.9); }
+}
+.rb-rose-pop {
+  animation: rb-rose-pop 900ms var(--rb-ease-out) 120ms both;
+}
+@keyframes rb-rose-pop {
+  from { opacity: 0; transform: scale(0.5) rotate(-60deg); }
+  30% { opacity: 1; }
+  to { opacity: 1; transform: none; }
+}
+.rb-check {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: rb-check 520ms var(--rb-ease-out) 620ms forwards;
+}
+@keyframes rb-check {
+  to { stroke-dashoffset: 0; }
+}
+.rb-spark {
+  animation: rb-spark 900ms var(--rb-ease-out) both;
+  animation-delay: calc(var(--i, 0) * 40ms + 200ms);
+}
+@keyframes rb-spark {
+  from { opacity: 0; transform: rotate(var(--a)) translate3d(0, 0, 0) scale(0.6); }
+  30% { opacity: 1; }
+  to { opacity: 0; transform: rotate(var(--a)) translate3d(0, -118px, 0) scale(1); }
+}
+
+/* Hide the native scrollbar on the day strip but keep momentum scrolling. */
+.rb-days {
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%);
+}
+.rb-days > * {
+  scroll-snap-align: start;
+}
+
+/* Springs where linear() is supported; the strong ease-out above is the fallback. */
+@supports (animation-timing-function: linear(0, 1)) {
+  .rb-step,
+  .rb-picked,
+  .rb-notice {
+    animation-timing-function: var(--rb-spring);
+  }
+  .rb-rose-pop {
+    animation-timing-function: var(--rb-spring-pop);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rb-step,
+  .rb-step[data-dir="back"],
+  .rb-stagger > *,
+  .rb-slot,
+  .rb-notice,
+  .rb-rose-pop,
+  .rb-burst-halo,
+  .rb-swap {
+    animation-name: rb-fade;
+  }
+  .rb-burst-ring,
+  .rb-spark,
+  .rb-progress-marker svg {
+    display: none;
+  }
+  .rb-press:active:not(:disabled) {
+    transform: none;
+  }
+}
+@keyframes rb-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

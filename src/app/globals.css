@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #070707;
+  --color-surface: #0e0e0e;
+  --color-card: #141414;
+  --color-card-2: #1b1b1b;
+  --color-line: #262626;
+  --color-line-strong: #3d3d3d;
+  --color-ink: #f4f4f2;
+  --color-dim: #a3a3a0;
+  --color-faint: #6b6b68;
+  --color-ok: #8fc79a;
+  --color-bad: #e58b80;
+  --color-warn: #e6c27a;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-gothic: var(--font-grenze), "Old English Text MT", serif;
+  --font-serif: var(--font-cormorant), ui-serif, Georgia, serif;
+
+  --radius-card: 18px;
+
+  --animate-spin-slow: spin 140s linear infinite;
+  --animate-spin-slower: spin 220s linear infinite reverse;
+  --animate-float: float 9s ease-in-out infinite;
+  --animate-reveal: reveal 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-fade: fade 0.6s ease both;
+  --animate-glow: glow 5s ease-in-out infinite;
+  --animate-draw: draw 2.4s cubic-bezier(0.6, 0, 0.2, 1) both;
+  --animate-shimmer: shimmer 6s linear infinite;
+  --animate-pop: pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(4deg); }
+  }
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(18px); filter: blur(6px); }
+    to { opacity: 1; transform: none; filter: none; }
+  }
+  @keyframes fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes glow {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 1; }
+  }
+  @keyframes draw {
+    from { stroke-dashoffset: var(--len, 1200); }
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes shimmer {
+    from { background-position: 200% 50%; }
+    to { background-position: -200% 50%; }
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: scale(0.6); }
+    to { opacity: 1; transform: scale(1); }
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+  }
+  ::selection {
+    background: var(--color-ink);
+    color: var(--color-bg);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Film grain over everything: gives the black & grey tattoo feel. */
+  .grain::after {
+    content: "";
+    position: fixed;
+    inset: -50%;
+    pointer-events: none;
+    z-index: 60;
+    opacity: 0.06;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation: grain 1.2s steps(6) infinite;
+  }
+  @keyframes grain {
+    0% { transform: translate(0, 0); }
+    20% { transform: translate(-3%, 2%); }
+    40% { transform: translate(2%, -3%); }
+    60% { transform: translate(-2%, -1%); }
+    80% { transform: translate(3%, 3%); }
+    100% { transform: translate(0, 0); }
+  }
+
+  .text-shimmer {
+    background: linear-gradient(100deg, #8a8a88 0%, #f4f4f2 22%, #ffffff 28%, #8a8a88 45%, #f4f4f2 70%, #8a8a88 100%);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: var(--animate-shimmer);
+  }
+
+  /* Logo is black-on-white: invert to white-on-black and let `screen` drop the black backdrop. */
+  .logo-invert {
+    filter: invert(1) contrast(1.15);
+    mix-blend-mode: screen;
+  }
+
+  .vignette {
+    background: radial-gradient(ellipse at 50% 30%, transparent 0%, rgba(0, 0, 0, 0.55) 70%, #000 100%);
+  }
+
+  .stagger > * {
+    animation: var(--animate-reveal);
+    animation-delay: calc(var(--i, 0) * 70ms);
+  }
+
+  .petal {
+    position: absolute;
+    top: -40px;
+    animation: petal-fall var(--dur, 14s) linear var(--delay, 0s) infinite;
+    will-change: transform;
+  }
+  @keyframes petal-fall {
+    0% { transform: translate3d(0, -40px, 0) rotate(0deg); opacity: 0; }
+    10% { opacity: var(--op, 0.8); }
+    50% { transform: translate3d(var(--sway, 40px), 50vh, 0) rotate(220deg); }
+    90% { opacity: var(--op, 0.8); }
+    100% { transform: translate3d(calc(var(--sway, 40px) * -0.6), 105vh, 0) rotate(420deg); opacity: 0; }
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .petal,
+  .grain::after {
+    display: none;
+  }
+}

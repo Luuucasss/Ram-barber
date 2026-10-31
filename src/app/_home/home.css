@@ -1,0 +1,132 @@
+/*
+ * Home page motion. Logo keeps its invert filter inside the keyframes so the
+ * `screen` blend (which drops the JPG's black backdrop over the halo) never breaks:
+ * we animate the <img> itself and never wrap it in an isolating/animated ancestor.
+ */
+
+:root {
+  --rh-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Focus-pull entrance for the logo: blurred + slightly small -> sharp. */
+.rh-logo-in {
+  animation: rh-logo-in 1400ms var(--rh-ease-out) 120ms both;
+}
+@keyframes rh-logo-in {
+  from { opacity: 0; transform: scale(0.94); filter: invert(1) contrast(1.15) blur(10px); }
+  to { opacity: 1; transform: none; filter: invert(1) contrast(1.15) blur(0); }
+}
+
+/* Halo: fades/expands in once, then the inner svg keeps its slow rotation. */
+.rh-halo-in {
+  animation: rh-halo-in 2200ms var(--rh-ease-out) both;
+}
+@keyframes rh-halo-in {
+  from { opacity: 0; transform: scale(0.82); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Primary CTA: tactile press + a slow light sweep, like light across chrome. */
+.rh-cta {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    transform 160ms var(--rh-ease-out),
+    background-color 200ms ease,
+    box-shadow 250ms ease;
+}
+.rh-cta:active {
+  transform: scale(0.97);
+}
+.rh-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(105deg, transparent 35%, rgba(0, 0, 0, 0.12) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: rh-sweep 5.5s ease-in-out 2.2s infinite;
+}
+@keyframes rh-sweep {
+  0% { transform: translateX(-120%); }
+  22%, 100% { transform: translateX(120%); }
+}
+.rh-cta .rh-arrow {
+  transition: transform 200ms var(--rh-ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .rh-cta:hover .rh-arrow {
+    transform: translateX(4px);
+  }
+}
+
+.rh-press {
+  transition:
+    transform 160ms var(--rh-ease-out),
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease;
+}
+.rh-press:active {
+  transform: scale(0.97);
+}
+
+/* Service rows: the arrow slides in on hover (pointer devices only). */
+.rh-row .rh-row-arrow {
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 200ms ease, transform 200ms var(--rh-ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .rh-row:hover .rh-row-arrow {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Scroll reveal (toggled by <Reveal>). Transitions, so a fast scroll never restarts anything. */
+[data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 22px, 0);
+  transition:
+    opacity 700ms var(--rh-ease-out),
+    transform 900ms var(--rh-ease-out);
+  transition-delay: calc(var(--d, 0) * 80ms);
+}
+[data-reveal="in"] {
+  opacity: 1;
+  transform: none;
+}
+
+.rh-scroll-cue {
+  animation: rh-cue 2.6s ease-in-out infinite;
+}
+@keyframes rh-cue {
+  0%, 100% { transform: translateY(0); opacity: 0.55; }
+  50% { transform: translateY(6px); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rh-logo-in {
+    animation-name: rh-fade;
+  }
+  .rh-halo-in {
+    animation-name: rh-fade;
+  }
+  .rh-cta::before,
+  .rh-scroll-cue {
+    animation: none;
+  }
+  .rh-cta:active,
+  .rh-press:active {
+    transform: none;
+  }
+  [data-reveal] {
+    transform: none;
+  }
+}
+@keyframes rh-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
