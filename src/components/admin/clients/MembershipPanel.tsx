@@ -53,13 +53,14 @@ export function MembershipPanel({
   const defaultUntil = addDays(today, 30);
 
   const current = plans.find((p) => p._id === m.planId);
+  // Black & white: "attention" states use a dashed outline, the healthy state a solid ink one.
   const status = !hasPlan
-    ? { tone: "neutral" as const, label: "Sin membresía" }
+    ? { cls: "", label: "Sin membresía" }
     : expired
-      ? { tone: "warn" as const, label: "Vencida" }
+      ? { cls: "border-dashed border-ink/60 text-ink", label: "Vencida" }
       : empty
-        ? { tone: "warn" as const, label: "Sin cortes" }
-        : { tone: "ok" as const, label: "Activa" };
+        ? { cls: "border-dashed border-ink/60 text-ink", label: "Sin cortes" }
+        : { cls: "border-ink/70 bg-white/[0.06] text-ink", label: "Activa" };
 
   return (
     <Card className="flex flex-col gap-5 p-5">
@@ -68,21 +69,23 @@ export function MembershipPanel({
           <h2 className="flex items-center gap-2 font-semibold">
             <BadgeCheck className="h-4 w-4" aria-hidden="true" /> Membresía
           </h2>
-          {!enabled && <p className="mt-0.5 text-xs text-warn">Las membresías están desactivadas en Configuración.</p>}
+          {!enabled && <p className="mt-0.5 text-xs text-dim">Las membresías están desactivadas en Configuración.</p>}
         </div>
-        <Pill tone={status.tone}>{status.label}</Pill>
+        <Pill tone="neutral" className={cn("shrink-0", status.cls)}>
+          {status.label}
+        </Pill>
       </div>
 
       {hasPlan && (
         <div className="flex flex-col gap-4">
           <div className="flex items-end justify-between gap-3">
-            <div>
-              <p className="text-lg font-semibold">{m.planName}</p>
+            <div className="min-w-0">
+              <p className="break-words text-lg font-semibold leading-snug">{m.planName}</p>
               <p className="text-sm text-dim">
                 {m.validUntil ? `${expired ? "Venció" : "Vence"} el ${numericDate(m.validUntil)}` : "Sin vencimiento"}
               </p>
             </div>
-            <p className="text-right">
+            <p className="shrink-0 text-right">
               <span className="text-3xl font-semibold tabular-nums">{m.cutsRemaining}</span>
               <span className="text-sm text-dim tabular-nums">/{m.cutsPerPeriod}</span>
               <span className="block text-xs text-faint">cortes restantes</span>
@@ -95,8 +98,9 @@ export function MembershipPanel({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Cortes restantes">
+          {/* items-end + a short label keep both inputs on the same baseline in the narrow column. */}
+          <div className="grid grid-cols-[6.5rem_minmax(0,1fr)] items-end gap-3 sm:grid-cols-2">
+            <Field label="Cortes">
               {(id) => (
                 <Input
                   id={id}
@@ -106,7 +110,7 @@ export function MembershipPanel({
                   inputMode="numeric"
                   value={cuts}
                   onChange={(e) => setCuts(e.target.value)}
-                  className="h-10 rounded-xl text-sm"
+                  className="h-11 min-w-0 rounded-xl text-base sm:h-10 sm:text-sm"
                 />
               )}
             </Field>
@@ -117,16 +121,17 @@ export function MembershipPanel({
                   type="date"
                   value={until}
                   onChange={(e) => setUntil(e.target.value)}
-                  className="h-10 rounded-xl px-3 text-sm"
+                  className="h-11 min-w-0 rounded-xl px-3 text-base sm:h-10 sm:text-sm"
                 />
               )}
             </Field>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             {dirty && (
               <Button
                 size="sm"
+                className="col-span-2 h-12 sm:h-9"
                 onClick={() =>
                   onSave({ active: true, cutsRemaining: Math.max(0, Math.round(Number(cuts) || 0)), validUntil: until }, "edit")
                 }
@@ -139,6 +144,7 @@ export function MembershipPanel({
             <Button
               size="sm"
               variant="outline"
+              className="h-12 sm:h-9"
               onClick={() => m.planId && onSave({ active: true, planId: m.planId }, "renew")}
               loading={busy === "renew"}
               disabled={!!busy}
@@ -146,13 +152,13 @@ export function MembershipPanel({
             >
               <RefreshCw className="h-4 w-4" aria-hidden="true" /> Renovar
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setAssigning((v) => !v)} disabled={!!busy}>
+            <Button size="sm" variant="ghost" className="h-12 sm:h-9" onClick={() => setAssigning((v) => !v)} disabled={!!busy}>
               Cambiar plan
             </Button>
             <ConfirmButton
               size="sm"
               variant="ghost"
-              className="ml-auto"
+              className="col-span-2 h-12 sm:ml-auto sm:h-9"
               onConfirm={() => onSave({ active: false }, "off")}
               loading={busy === "off"}
               disabled={!!busy}
@@ -193,7 +199,7 @@ export function MembershipPanel({
           >
             <Field label={hasPlan ? "Nuevo plan" : "Asignar plan"}>
               {(id) => (
-                <Select id={id} value={planId} onChange={(e) => setPlanId(e.target.value)} className="h-10 rounded-xl text-sm">
+                <Select id={id} value={planId} onChange={(e) => setPlanId(e.target.value)} className="h-11 min-w-0 rounded-xl text-base sm:h-10 sm:text-sm">
                   <option value="">Elegí un plan…</option>
                   {plans.map((p) => (
                     <option key={p._id} value={p._id}>
@@ -204,7 +210,7 @@ export function MembershipPanel({
               )}
             </Field>
             {plan && (
-              <div className="grid grid-cols-2 gap-3 animate-fade">
+              <div className="grid grid-cols-[6.5rem_minmax(0,1fr)] items-end gap-3 animate-fade sm:grid-cols-2">
                 <Field label="Cortes">
                   {(id) => (
                     <Input
@@ -216,7 +222,7 @@ export function MembershipPanel({
                       placeholder={String(plan.cuts)}
                       value={newCuts}
                       onChange={(e) => setNewCuts(e.target.value)}
-                      className="h-10 rounded-xl text-sm"
+                      className="h-11 min-w-0 rounded-xl text-base sm:h-10 sm:text-sm"
                     />
                   )}
                 </Field>
@@ -227,18 +233,24 @@ export function MembershipPanel({
                       type="date"
                       value={newUntil || defaultUntil}
                       onChange={(e) => setNewUntil(e.target.value)}
-                      className="h-10 rounded-xl px-3 text-sm"
+                      className="h-11 min-w-0 rounded-xl px-3 text-base sm:h-10 sm:text-sm"
                     />
                   )}
                 </Field>
               </div>
             )}
             <div className="flex gap-2">
-              <Button type="submit" size="sm" disabled={!planId || !!busy} loading={busy === "assign"}>
+              <Button
+                type="submit"
+                size="sm"
+                className="h-12 flex-1 sm:h-9 sm:flex-none"
+                disabled={!planId || !!busy}
+                loading={busy === "assign"}
+              >
                 {hasPlan ? "Cambiar plan" : "Asignar"}
               </Button>
               {hasPlan && (
-                <Button type="button" size="sm" variant="ghost" onClick={() => setAssigning(false)}>
+                <Button type="button" size="sm" variant="ghost" className="h-12 sm:h-9" onClick={() => setAssigning(false)}>
                   Cancelar
                 </Button>
               )}

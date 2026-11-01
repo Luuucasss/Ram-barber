@@ -16,7 +16,7 @@ export function Pagination({
   const from = (page - 1) * pageSize + 1;
   const to = Math.min(total, page * pageSize);
   const btn =
-    "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-line text-dim transition-[color,border-color,transform] duration-150 ease-out hover:border-line-strong hover:text-ink active:scale-[0.97] disabled:pointer-events-none disabled:opacity-35";
+    "inline-flex h-11 w-11 items-center justify-center rounded-xl md:h-9 md:w-9 border border-line text-dim transition-[color,border-color,transform] duration-150 ease-out hover:border-line-strong hover:text-ink active:scale-[0.97] disabled:pointer-events-none disabled:opacity-35";
   return (
     <nav className="flex items-center justify-between gap-3 text-sm text-dim" aria-label="Paginación">
       <span className="tabular-nums">

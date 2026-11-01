@@ -86,16 +86,18 @@ export default async function HomePage() {
             <Rose size={150} tone="dark" className="animate-float" />
             <Leaves size={110} className="-mt-6 ml-8 opacity-80" />
           </div>
-          <div className="absolute -right-8 top-[3%] origin-top-right scale-[0.7] opacity-30 sm:right-[8%] sm:top-[14%] sm:scale-100 sm:opacity-45">
+          <div className="absolute -right-10 -top-6 origin-top-right scale-[0.7] opacity-30 sm:right-[8%] sm:top-[14%] sm:scale-100 sm:opacity-45">
             <Rose size={84} tone="light" className="animate-float [animation-delay:-4s]" />
           </div>
           <div className="absolute right-[10%] bottom-[22%] hidden opacity-30 md:block">
             <Rose size={56} tone="dark" className="animate-float [animation-delay:-2s]" />
           </div>
+          {/* Petals fall behind the content so they never cross the buttons or copy. */}
+          <PetalRain />
         </div>
 
         <div className="relative flex w-full max-w-xl flex-col items-center text-center">
-          <p className="animate-fade text-[11px] font-semibold uppercase tracking-[0.42em] text-dim [animation-delay:200ms]">
+          <p className="animate-fade text-[11px] font-semibold uppercase tracking-[0.3em] text-dim [animation-delay:200ms] min-[380px]:tracking-[0.42em]">
             Barbería · Turnos online
           </p>
 
@@ -136,13 +138,13 @@ export default async function HomePage() {
             <div style={{ "--i": 10 } as React.CSSProperties} className="grid grid-cols-2 gap-3">
               <Link
                 href="/mis-turnos"
-                className="rh-press flex h-13 items-center justify-center gap-2 rounded-2xl border border-line-strong bg-bg/40 text-sm font-semibold backdrop-blur-sm hover:border-ink hover:bg-white/5"
+                className="rh-press flex h-13 items-center justify-center gap-1.5 whitespace-nowrap rounded-2xl border border-line-strong bg-bg/40 px-2 text-[13px] font-semibold backdrop-blur-sm hover:border-ink hover:bg-white/5 min-[360px]:gap-2 min-[360px]:text-sm"
               >
                 <CalendarCheck className="h-4 w-4" aria-hidden="true" /> Mis turnos
               </Link>
               <Link
                 href="/fidelidad"
-                className="rh-press flex h-13 items-center justify-center gap-2 rounded-2xl border border-line-strong bg-bg/40 text-sm font-semibold backdrop-blur-sm hover:border-ink hover:bg-white/5"
+                className="rh-press flex h-13 items-center justify-center gap-1.5 whitespace-nowrap rounded-2xl border border-line-strong bg-bg/40 px-2 text-[13px] font-semibold backdrop-blur-sm hover:border-ink hover:bg-white/5 min-[360px]:gap-2 min-[360px]:text-sm"
               >
                 <Crown className="h-4 w-4" aria-hidden="true" /> Fidelidad RAM
               </Link>
@@ -154,7 +156,7 @@ export default async function HomePage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ "--i": 11 } as React.CSSProperties}
-                className="mx-auto mt-1 inline-flex items-center gap-2 text-sm font-medium text-dim transition-colors hover:text-ink"
+                className="mx-auto inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-medium text-dim transition-colors hover:text-ink"
               >
                 <WhatsAppIcon className="h-4 w-4" /> Consultas por WhatsApp
               </a>
@@ -169,12 +171,10 @@ export default async function HomePage() {
           )}
         </div>
 
-        <PetalRain />
-
         <a
           href={services.length ? "#servicios" : "#horarios"}
           aria-label="Ver servicios y horarios"
-          className="rh-scroll-cue absolute bottom-6 left-1/2 -ml-5 grid h-10 w-10 place-items-center rounded-full text-dim hover:text-ink"
+          className="rh-scroll-cue absolute bottom-5 left-1/2 -ml-[22px] grid h-11 w-11 place-items-center rounded-full text-dim hover:text-ink"
         >
           <ChevronDown className="h-5 w-5" />
         </a>
@@ -191,14 +191,15 @@ export default async function HomePage() {
                   href={`/reservar?servicio=${s._id}`}
                   className="rh-row rh-press group flex items-start gap-4 rounded-2xl px-3 py-5 hover:bg-white/[0.03] sm:px-5"
                 >
-                  <span aria-hidden="true" className="font-gothic w-9 shrink-0 pt-0.5 text-3xl leading-none text-line-strong transition-colors group-hover:text-dim">
+                  <span aria-hidden="true" className="font-gothic w-8 shrink-0 pt-0.5 text-2xl leading-none text-line-strong transition-colors group-hover:text-dim sm:w-9 sm:text-3xl">
                     {ROMAN[i] ?? i + 1}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-baseline gap-3">
-                      <span className="text-lg font-semibold sm:text-xl">{s.name}</span>
-                      <span aria-hidden="true" className="mb-1 h-px flex-1 border-b border-dotted border-line-strong" />
-                      <span className="font-gothic text-2xl leading-none tabular-nums sm:text-3xl">
+                    {/* Wraps instead of squeezing: a long name takes its own line and the dotted leader + price drop below it. */}
+                    <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <span className="min-w-0 max-w-full text-lg font-semibold leading-snug [overflow-wrap:anywhere] sm:text-xl">{s.name}</span>
+                      <span aria-hidden="true" className="mb-1 h-px min-w-3 flex-1 border-b border-dotted border-line-strong" />
+                      <span className="font-gothic shrink-0 whitespace-nowrap text-2xl leading-none tabular-nums sm:text-3xl">
                         {formatPrice(s.price, settings.currency)}
                       </span>
                     </span>
@@ -300,10 +301,11 @@ export default async function HomePage() {
       {/* ───────────── CTA final ───────────── */}
       <section className="pt-20">
         <Reveal className="relative flex flex-col items-center overflow-hidden rounded-[28px] border border-line-strong bg-card px-6 py-12 text-center">
-          <div className="pointer-events-none absolute -bottom-10 -left-10 opacity-40" aria-hidden="true">
+          {/* Corner roses stay tucked into the corners on phones so they never touch the button or copy. */}
+          <div className="pointer-events-none absolute -bottom-20 -left-20 opacity-30 sm:-bottom-10 sm:-left-10 sm:opacity-40" aria-hidden="true">
             <Rose size={130} tone="dark" />
           </div>
-          <div className="pointer-events-none absolute -right-8 -top-8 opacity-30" aria-hidden="true">
+          <div className="pointer-events-none absolute -right-12 -top-12 opacity-25 sm:-right-8 sm:-top-8 sm:opacity-30" aria-hidden="true">
             <Rose size={100} tone="light" />
           </div>
           <OrnamentDivider />

@@ -11,7 +11,7 @@ export function MemberCard({ member }: { member: NonNullable<LoyaltyView["member
   const validUntil = /^\d{4}-\d{2}-\d{2}$/.test(member.validUntil) ? formatDateLong(member.validUntil) : "";
 
   return (
-    <article className="relative isolate overflow-hidden rounded-[24px] border border-ink/80 bg-card-2 px-5 pb-6 pt-7 text-center shadow-[0_30px_80px_-40px_rgba(255,255,255,0.35)] animate-reveal">
+    <article className="relative isolate overflow-hidden rounded-[24px] border border-ink/80 bg-card-2 px-4 pb-6 pt-7 text-center shadow-[0_30px_80px_-40px_rgba(255,255,255,0.35)] animate-reveal min-[360px]:px-5">
       <div className="pointer-events-none absolute inset-x-0 -top-44 -z-10 flex justify-center opacity-25" aria-hidden="true">
         <HaloRays size={460} rays={52} className="animate-spin-slow" />
       </div>
@@ -19,7 +19,9 @@ export function MemberCard({ member }: { member: NonNullable<LoyaltyView["member
       <Pill tone="ink" className="uppercase tracking-[0.2em]">
         Socio RAM
       </Pill>
-      <h2 className="mt-3 font-gothic text-5xl leading-none text-shimmer">{member.planName || "Plan exclusivo"}</h2>
+      <h2 className="mt-3 text-balance break-words font-gothic text-[clamp(2.25rem,11vw,3rem)] leading-none text-shimmer">
+        {member.planName || "Plan exclusivo"}
+      </h2>
 
       <div className="mt-6 flex items-end justify-center gap-2">
         <span className="font-serif text-7xl font-semibold leading-[0.8] tabular-nums">{member.cutsRemaining}</span>

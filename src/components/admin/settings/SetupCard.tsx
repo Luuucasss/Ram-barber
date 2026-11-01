@@ -29,7 +29,7 @@ export function SetupCard() {
     <Card className="flex flex-col gap-4 p-4 sm:p-5">
       <div className="flex items-start gap-3">
         <Database className="mt-0.5 h-5 w-5 shrink-0 text-dim" aria-hidden="true" />
-        <div>
+        <div className="min-w-0">
           <h2 className="font-semibold">Datos iniciales</h2>
           <p className="mt-1 text-sm text-dim">
             Carga la configuración, una sucursal, los servicios base y un barbero con horario de ejemplo.{" "}
@@ -51,7 +51,7 @@ export function SetupCard() {
             </>
           ) : (
             <>
-              <Check className="mt-0.5 h-4 w-4 shrink-0 text-ok" aria-hidden="true" />
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-ink" aria-hidden="true" />
               <div>
                 <p className="font-medium text-ink">Listo. Se creó:</p>
                 <ul className="mt-1 list-inside list-disc text-dim">
@@ -68,7 +68,7 @@ export function SetupCard() {
       <ErrorText>{error}</ErrorText>
 
       <div>
-        <Button variant="outline" onClick={run} loading={busy}>
+        <Button variant="outline" onClick={run} loading={busy} className="w-full sm:w-auto">
           Cargar datos iniciales
         </Button>
       </div>

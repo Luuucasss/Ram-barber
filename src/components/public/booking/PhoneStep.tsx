@@ -102,6 +102,7 @@ export function PhoneStep({
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel-national"
+                enterKeyHint="go"
                 placeholder="351 555 1234"
                 autoFocus
                 value={value}

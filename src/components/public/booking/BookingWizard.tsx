@@ -5,7 +5,10 @@ import "./booking.css";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { CalendarCheck, CalendarX2 } from "lucide-react";
 import { Button, Spinner } from "@/components/ui";
+import { WhatsAppIcon } from "@/components/public/PublicShell";
+import { whatsappLink } from "@/lib/phone";
 import { api, ApiClientError } from "@/lib/client-api";
 import { BarberStep, BranchStep, IdentityBanner, ServiceStep, pricingFor } from "./ChoiceSteps";
 import { ConfirmStep, type Summary } from "./ConfirmStep";
@@ -296,14 +299,18 @@ export function BookingWizard({ catalog, initialServiceId }: { catalog: BookingC
       setIdentifyError(null);
       try {
         const identity = await api<IdentifyResult>("/api/public/identify", { body: { phone } });
+        // Read the previous phone BEFORE overwriting it: the stored name only belongs to that number.
+        const prevTel = readStorage(STORAGE_KEYS.phone);
+        const samePerson = prevTel === identity.phone;
+        const storedName = samePerson ? (readStorage(STORAGE_KEYS.name) ?? "").trim() : "";
+        if (!samePerson) writeStorage(STORAGE_KEYS.name, null); // shared device: never prefill someone else's name
         writeStorage(STORAGE_KEYS.phone, identity.phone);
-        const storedTel = readStorage(STORAGE_KEYS.phone);
-        const storedName = (readStorage(STORAGE_KEYS.name) ?? "").trim();
         setSel((s) => ({
           ...s,
           phone: identity.phone,
           identity,
-          name: s.name || (storedTel === identity.phone && storedName ? storedName : (identity.firstName ?? "")),
+          // A name typed in this session is kept only while the phone stays the same.
+          name: (s.phone === identity.phone && s.name) || storedName || (identity.firstName ?? ""),
         }));
         // Coming from a service link on the home page: jump straight past the service step (once).
         const jump =
@@ -484,15 +491,32 @@ export function BookingWizard({ catalog, initialServiceId }: { catalog: BookingC
       header = { title: "¿Qué te hacemos?", subtitle: "Elegí el servicio." };
       body = (
         <>
-          {sel.identity && <IdentityBanner identity={sel.identity} settings={settings} />}
+          {/* At the limit the Notice below says it all: the banner drops its own "Ya tenés N turnos" line. */}
+          {sel.identity && <IdentityBanner identity={sel.identity} settings={settings} showUpcoming={!blocked} />}
           {blocked ? (
-            <Notice tone="warn">
-              Ya tenés {sel.identity?.upcomingCount} turnos reservados, que es el máximo online. Para sacar otro, cancelá
-              alguno desde{" "}
-              <Link href="/mis-turnos" className="font-semibold underline underline-offset-4">
-                Mis turnos
-              </Link>{" "}
-              o escribinos por WhatsApp.
+            <Notice tone="warn" icon={<CalendarX2 className="h-4 w-4" aria-hidden="true" />}>
+              <p className="font-medium">Ya tenés {sel.identity?.upcomingCount} turnos reservados.</p>
+              <p className="mt-1 text-dim">
+                Es el máximo para reservar online. Para sacar otro, cancelá alguno o escribinos y te hacemos un lugar.
+              </p>
+              <div className="mt-3 flex flex-col gap-2 min-[380px]:flex-row">
+                <Link
+                  href="/mis-turnos"
+                  className="rb-press inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-bg hover:bg-white"
+                >
+                  <CalendarCheck className="h-4 w-4" aria-hidden="true" /> Ir a Mis turnos
+                </Link>
+                {settings.whatsapp && (
+                  <a
+                    href={whatsappLink(settings.whatsapp, "¡Hola! Quiero sacar un turno pero ya tengo 3 reservados.")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rb-press inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-line-strong px-4 text-sm font-semibold text-ink hover:border-ink hover:bg-white/5"
+                  >
+                    <WhatsAppIcon className="h-4 w-4" /> WhatsApp
+                  </a>
+                )}
+              </div>
             </Notice>
           ) : (
             <ServiceStep

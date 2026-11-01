@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarClock, Pencil, Plus, Scissors, Store, Trash2, UserRound } from "lucide-react";
-import { AdminPageHeader } from "@/components/admin/AdminShell";
-import { Button, Card, EmptyState, ErrorText, Field, Input, Pill, Select, Textarea, Toggle } from "@/components/ui";
+import { AlertCircle, CalendarClock, Pencil, Plus, Scissors, Store, Trash2, UserRound } from "lucide-react";
+import { AdminFab, AdminPageHeader } from "@/components/admin/AdminShell";
+import { Button, Card, EmptyState, ErrorText, Field, Input, Pill, Select, Textarea } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import {
   ActiveSwitch,
@@ -14,11 +14,13 @@ import {
   ChipMultiSelect,
   ConfirmDialog,
   FormActions,
+  FormToggle,
   enter,
   errorMessage,
   fieldErrors,
   isHttpUrl,
   num,
+  revealFirstError,
 } from "./parts";
 import { ScheduleEditor, scheduleErrors } from "./ScheduleEditor";
 import { DAY_LETTER, WEEK_ORDER, formatHours, summarizeSchedule, totalMinutes } from "./schedule-utils";
@@ -52,12 +54,17 @@ function Barbers({ initial, branches, services }: Props) {
         description="Quién atiende, dónde, qué servicios hace y en qué horarios."
         actions={
           branches.length > 0 && (
-            <Button onClick={() => setEditing("new")}>
+            <Button onClick={() => setEditing("new")} className="hidden md:inline-flex">
               <Plus className="h-4 w-4" aria-hidden="true" /> Nuevo barbero
             </Button>
           )
         }
       />
+      {branches.length > 0 && (
+        <AdminFab onClick={() => setEditing("new")} icon={<Plus className="h-5 w-5" aria-hidden="true" />}>
+          Nuevo barbero
+        </AdminFab>
+      )}
 
       {branches.length === 0 ? (
         <EmptyState title="Primero creá una sucursal" icon={<Store className="h-6 w-6" />}>
@@ -71,7 +78,7 @@ function Barbers({ initial, branches, services }: Props) {
           Agregá al primero para empezar a recibir turnos.
         </EmptyState>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
           {col.items.map((b, i) => {
             const e = enter(i);
             const validServices = b.serviceIds.filter((id) => serviceIds.has(id));
@@ -113,12 +120,12 @@ function Barbers({ initial, branches, services }: Props) {
 
                 <div className="rounded-2xl border border-line bg-surface px-3 py-2.5">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex gap-1" aria-label="Días de atención">
+                    <div className="flex min-w-0 gap-1" aria-label="Días de atención">
                       {WEEK_ORDER.map((d) => (
                         <span
                           key={d}
                           className={cn(
-                            "flex h-6 w-6 items-center justify-center rounded-md text-[11px] font-semibold",
+                            "flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold max-[359px]:h-5 max-[359px]:w-5 max-[359px]:text-[10px]",
                             workDays.has(d) ? "bg-ink text-bg" : "border border-line text-faint",
                           )}
                         >
@@ -126,18 +133,18 @@ function Barbers({ initial, branches, services }: Props) {
                         </span>
                       ))}
                     </div>
-                    <span className="text-xs tabular-nums text-dim">{formatHours(totalMinutes(b.schedule))}/sem</span>
+                    <span className="shrink-0 text-xs tabular-nums text-dim">{formatHours(totalMinutes(b.schedule))}/sem</span>
                   </div>
                   <div className="mt-2 flex flex-col gap-0.5 text-xs text-dim">
-                    {summary.length ? summary.map((line) => <span key={line}>{line}</span>) : <span className="text-warn">Sin horarios cargados</span>}
+                    {summary.length ? summary.map((line) => <span key={line}>{line}</span>) : <span className="font-medium text-ink">Sin horarios cargados</span>}
                   </div>
                 </div>
 
                 <div className="mt-auto flex gap-2">
-                  <Button variant="subtle" size="sm" className="flex-1" onClick={() => setEditing(b)}>
+                  <Button variant="subtle" size="sm" className="h-11 flex-1 sm:pointer-fine:h-9" onClick={() => setEditing(b)}>
                     <Pencil className="h-3.5 w-3.5" aria-hidden="true" /> Editar
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setDeleting(b)} aria-label={`Eliminar a ${b.name}`}>
+                  <Button variant="ghost" size="sm" className="h-11 w-11 sm:pointer-fine:h-9 sm:pointer-fine:w-auto" onClick={() => setDeleting(b)} aria-label={`Eliminar a ${b.name}`}>
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 </div>
@@ -146,6 +153,8 @@ function Barbers({ initial, branches, services }: Props) {
           })}
         </div>
       )}
+      {/* Keeps the last card clear of the floating "Nuevo barbero" button on phones. */}
+      {branches.length > 0 && <div aria-hidden="true" className="h-16 md:hidden" />}
 
       <CatalogModal
         open={editing !== null}
@@ -227,6 +236,7 @@ function BarberForm({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
     setSubmitted(true);
     const errs: Record<string, string> = {};
     if (!name.trim()) errs.name = "Ingresá el nombre.";
@@ -238,7 +248,10 @@ function BarberForm({
     const schedErr = scheduleErrors(schedule);
     if (Object.keys(schedErr).length) errs.schedule = "Revisá los horarios marcados en rojo.";
     setErrors(errs);
-    if (Object.keys(errs).length) return;
+    if (Object.keys(errs).length) {
+      revealFirstError(form);
+      return;
+    }
 
     setSaving(true);
     setFormError("");
@@ -256,6 +269,7 @@ function BarberForm({
     } catch (err) {
       setErrors(fieldErrors(err));
       setFormError(errorMessage(err));
+      revealFirstError(form);
     } finally {
       setSaving(false);
     }
@@ -263,28 +277,39 @@ function BarberForm({
 
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-5">
-      <div className="flex items-start gap-4">
-        <Avatar name={name || "?"} url={isHttpUrl(photoUrl.trim()) ? photoUrl.trim() : ""} size={72} className="mt-6" />
-        <div className="flex flex-1 flex-col gap-4">
-          <Field label="Nombre" error={errors.name}>
-            {(id) => (
-              <Input id={id} value={name} onChange={(e) => setName(e.target.value)} maxLength={80} autoFocus aria-invalid={!!errors.name} />
-            )}
-          </Field>
-          <Field label="Foto (URL)" hint="Se muestra en blanco y negro. Pegá un link público a la imagen." error={errors.photoUrl}>
-            {(id) => (
-              <Input
-                id={id}
-                type="url"
-                inputMode="url"
-                placeholder="https://…"
-                value={photoUrl}
-                onChange={(e) => setPhotoUrl(e.target.value)}
-                aria-invalid={!!errors.photoUrl}
-              />
-            )}
-          </Field>
-        </div>
+      {/* Phones: avatar beside the name, photo URL full width below. sm+: avatar beside both. */}
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-4">
+        <Avatar
+          name={name || "?"}
+          url={isHttpUrl(photoUrl.trim()) ? photoUrl.trim() : ""}
+          size={64}
+          className="mt-5 sm:row-span-2 sm:mt-6"
+        />
+        <Field label="Nombre" error={errors.name}>
+          {(id) => (
+            <Input id={id} value={name} onChange={(e) => setName(e.target.value)} maxLength={80} autoFocus aria-invalid={!!errors.name} />
+          )}
+        </Field>
+        <Field
+          label="Foto (URL)"
+          hint="Se muestra en blanco y negro. Pegá un link público a la imagen."
+          error={errors.photoUrl}
+          className="col-span-2 sm:col-span-1 sm:col-start-2"
+        >
+          {(id) => (
+            <Input
+              id={id}
+              type="url"
+              inputMode="url"
+              autoCapitalize="none"
+              autoCorrect="off"
+              placeholder="https://…"
+              value={photoUrl}
+              onChange={(e) => setPhotoUrl(e.target.value)}
+              aria-invalid={!!errors.photoUrl}
+            />
+          )}
+        </Field>
       </div>
 
       <Field label="Bio" hint={<CharCount value={bio} max={300} />} error={errors.bio}>
@@ -300,7 +325,7 @@ function BarberForm({
         )}
       </Field>
 
-      <div className="grid gap-4 sm:grid-cols-[1fr_120px]">
+      <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-3 sm:grid-cols-[1fr_120px] sm:gap-4">
         <Field label="Sucursal" error={errors.branchId}>
           {(id) => (
             <Select id={id} value={branchId} onChange={(e) => setBranchId(e.target.value)} aria-invalid={!!errors.branchId}>
@@ -338,13 +363,14 @@ function BarberForm({
         </legend>
         <ScheduleEditor initial={barber?.schedule ?? []} onChange={setSchedule} showErrors={submitted} />
         {errors.schedule && (
-          <p className="text-xs text-bad" role="alert">
+          <p className="flex items-start gap-1.5 text-xs font-medium text-ink" role="alert">
+            <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             {errors.schedule}
           </p>
         )}
       </fieldset>
 
-      <Toggle checked={active} onChange={setActive} label="Activo (aparece para reservar)" />
+      <FormToggle checked={active} onChange={setActive} label="Activo (aparece para reservar)" />
 
       <ErrorText>{formError}</ErrorText>
       <FormActions onCancel={onCancel} saving={saving} submitLabel={barber ? "Guardar cambios" : "Crear barbero"} />

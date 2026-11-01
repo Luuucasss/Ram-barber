@@ -56,8 +56,8 @@ export function DateTimeStep({
     const morning = slots.filter((s) => toMin(s.time) < AFTERNOON_FROM);
     const afternoon = slots.filter((s) => toMin(s.time) >= AFTERNOON_FROM);
     return [
-      { id: "m", label: "Mañana", icon: Sun, slots: morning },
-      { id: "t", label: "Tarde", icon: Moon, slots: afternoon },
+      { id: "m", label: "Por la mañana", icon: Sun, slots: morning },
+      { id: "t", label: "Por la tarde", icon: Moon, slots: afternoon },
     ].filter((g) => g.slots.length);
   }, [day]);
 

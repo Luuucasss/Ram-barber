@@ -42,6 +42,29 @@ export function Reschedule({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const confirmRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // On phones the panel opens below the ticket: bring it to the top of the screen so the day chips
+  // and several rows of slots show above the sticky confirm bar.
+  // Phase "mount": only if the panel is (almost) off-screen, so the spinner can be seen. The page is
+  // still short here, so it can't reach the top yet. Phase "ready": once the slots are laid out
+  // (effects run after commit) scroll for real. An explicit window.scrollTo target is computed from
+  // the current scroll position, so a new call cleanly retargets a smooth scroll still in flight.
+  // The phase is recorded only when it actually runs, so StrictMode's double effect can't eat it.
+  const scrolled = useRef<"none" | "mount" | "ready">("none");
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el || scrolled.current === "ready") return;
+    const phase = loading ? "mount" : "ready";
+    if (phase === "mount" && scrolled.current === "mount") return;
+    scrolled.current = phase;
+    const top = el.getBoundingClientRect().top;
+    const vh = window.innerHeight;
+    const needed = phase === "mount" ? top > vh - 140 : top < 0 || top > vh * 0.12;
+    if (!needed) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: Math.max(0, window.scrollY + top - 12), behavior: reduce ? "auto" : "smooth" });
+  }, [loading]);
 
   const isCurrent = useCallback(
     (d: string, s: string) => d === booking.date && s === booking.start,
@@ -110,22 +133,25 @@ export function Reschedule({
 
   return (
     <section
+      ref={sectionRef}
       aria-labelledby="reschedule-title"
-      className="animate-reveal rounded-[var(--radius-card)] border border-line-strong bg-card p-4 [animation-duration:400ms] sm:p-5"
+      // overflow-clip (not hidden: that would break the sticky bar) rounds the bar's corners only
+      // where the card really ends; while pinned to the viewport the bar stays square.
+      className="scroll-mt-4 animate-reveal overflow-clip rounded-[var(--radius-card)] border border-line-strong bg-card p-4 [animation-duration:400ms] sm:p-5"
     >
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <h2 id="reschedule-title" className="flex items-center gap-2 text-lg font-semibold">
-            <CalendarClock className="h-5 w-5" aria-hidden="true" /> Elegí un nuevo horario
+      <div className="mb-4 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h2 id="reschedule-title" className="flex items-center gap-2 text-lg font-semibold leading-tight">
+            <CalendarClock className="h-5 w-5 shrink-0" aria-hidden="true" /> Elegí un nuevo horario
           </h2>
-          <p className="mt-0.5 text-sm text-dim">
+          <p className="mt-1 text-sm text-dim">
             Mismo servicio y barbero{booking.barberName ? ` (${booking.barberName})` : ""}.
           </p>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="shrink-0 rounded-lg px-2 py-1 text-sm text-dim transition-colors hover:text-ink"
+          className="-mr-2 -mt-2 inline-flex min-h-11 shrink-0 items-center rounded-xl px-3 text-sm font-medium text-dim transition-colors hover:text-ink active:bg-white/5"
         >
           Volver
         </button>
@@ -151,7 +177,7 @@ export function Reschedule({
             )}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm font-medium text-ink underline-offset-4 hover:underline"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-line-strong px-4 text-sm font-medium text-ink transition-colors hover:border-ink active:scale-[0.97]"
           >
             <WhatsAppIcon className="h-4 w-4" /> Escribir por WhatsApp
           </a>
@@ -252,7 +278,11 @@ export function Reschedule({
             )}
           </div>
 
-          <div ref={confirmRef} className="mt-5 flex flex-col gap-3 border-t border-line pt-4">
+          {/* Phones: the confirm bar sticks to the bottom of the screen while the slot grid scrolls. */}
+          <div
+            ref={confirmRef}
+            className="sticky bottom-0 z-10 -mx-4 -mb-4 mt-5 flex flex-col gap-3 border-t border-line bg-card/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 backdrop-blur-md sm:static sm:mx-0 sm:mb-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:backdrop-blur-none"
+          >
             {error && <ErrorText>{error}</ErrorText>}
             <p className="text-sm text-dim" aria-live="polite">
               {slot && date ? (

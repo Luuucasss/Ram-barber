@@ -101,7 +101,7 @@ export function StampCard({
       />
 
       {/* Inner flash-sheet border */}
-      <div className={cn("relative rounded-[18px] border border-line px-4 pb-4 pt-5 sm:px-5", paused && "grayscale")}>
+      <div className={cn("relative rounded-[18px] border border-line px-3 pb-4 pt-5 min-[360px]:px-4 sm:px-5", paused && "grayscale")}>
         <CornerStar className="left-2 top-2" />
         <CornerStar className="right-2 top-2" />
         <CornerStar className="bottom-2 left-2" />
@@ -110,7 +110,7 @@ export function StampCard({
         <header className="mb-5 flex items-end justify-between gap-3 px-1">
           <div className="leading-none">
             <span className="block font-gothic text-4xl text-shimmer">Ram</span>
-            <span className="mt-1 block pl-0.5 text-[9px] font-medium uppercase tracking-[0.45em] text-dim">
+            <span className="mt-1 block pl-0.5 text-[10px] font-medium uppercase tracking-[0.4em] text-dim min-[360px]:text-[11px]">
               Hair Studio
             </span>
           </div>
@@ -120,7 +120,7 @@ export function StampCard({
                 {badge}
               </Pill>
             )}
-            <span className="text-[9px] font-semibold uppercase tracking-[0.35em] text-faint">Tarjeta</span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-faint min-[360px]:text-[11px]">Tarjeta</span>
             <span className="font-serif text-xl italic leading-none text-ink">N° {String(cycle).padStart(2, "0")}</span>
           </div>
         </header>
@@ -141,7 +141,7 @@ export function StampCard({
               <li key={position} className="flex flex-col items-center gap-1.5">
                 <div className="relative aspect-square w-full max-w-[68px]">
                   {gift && !filled && (
-                    <div className="pointer-events-none absolute -inset-[55%] grid place-items-center" aria-hidden="true">
+                    <div className="pointer-events-none absolute -inset-[40%] grid place-items-center sm:-inset-[55%]" aria-hidden="true">
                       <HaloRays
                         size={160}
                         rays={28}
@@ -216,7 +216,7 @@ export function StampCard({
 
                 <span
                   className={cn(
-                    "flex min-h-[22px] items-start justify-center text-center text-[9px] font-semibold uppercase leading-tight tracking-[0.08em]",
+                    "flex min-h-[26px] max-w-full items-start justify-center text-balance text-center text-[10px] font-semibold uppercase leading-[1.15] tracking-[0.03em] [overflow-wrap:anywhere] min-[360px]:text-[11px]",
                     isNext ? "text-ink" : filled ? "text-faint" : label ? "text-dim" : "text-transparent",
                   )}
                 >

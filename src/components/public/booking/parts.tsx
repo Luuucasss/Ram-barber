@@ -25,7 +25,7 @@ export function WizardTopBar({
 }) {
   const progress = Math.min(1, Math.max(0, (index + 1) / total));
   const backClass =
-    "rb-press grid h-10 w-10 shrink-0 place-items-center rounded-full border border-line bg-card text-ink hover:border-ink";
+    "rb-press grid h-11 w-11 shrink-0 place-items-center rounded-full border border-line bg-card text-ink hover:border-ink";
   return (
     <div className="mb-7">
       <div className="flex items-center gap-3">
@@ -79,15 +79,19 @@ export function WizardTopBar({
 export const StepHeader = forwardRef<HTMLHeadingElement, { numeral: number; title: string; subtitle?: React.ReactNode }>(
   function StepHeader({ numeral, title, subtitle }, ref) {
     return (
-      <header className="mb-6 flex items-start gap-4">
+      <header className="mb-6 flex items-start gap-3 sm:gap-4">
         <span
           aria-hidden="true"
-          className="font-gothic -mt-1 min-w-[2ch] select-none text-5xl leading-none text-line-strong"
+          className="font-gothic -mt-0.5 min-w-[1.5ch] shrink-0 select-none text-4xl leading-none text-line-strong sm:-mt-1 sm:min-w-[2ch] sm:text-5xl"
         >
           {ROMAN[numeral] ?? numeral + 1}
         </span>
-        <div className="min-w-0">
-          <h1 ref={ref} tabIndex={-1} className="text-2xl font-semibold leading-tight tracking-tight outline-none">
+        <div className="min-w-0 flex-1">
+          <h1
+            ref={ref}
+            tabIndex={-1}
+            className="text-[22px] font-semibold leading-tight tracking-tight [overflow-wrap:anywhere] outline-none sm:text-2xl"
+          >
             {title}
           </h1>
           {subtitle && <div className="mt-1.5 text-sm leading-relaxed text-dim">{subtitle}</div>}
@@ -196,11 +200,12 @@ export function Notice({
   children: React.ReactNode;
   className?: string;
 }) {
+  // Black & white only: tones differ by weight of the border/surface, never by hue.
   const tones = {
     neutral: "border-line-strong bg-card text-ink",
-    warn: "border-warn/40 bg-warn/5 text-warn",
-    bad: "border-bad/40 bg-bad/5 text-bad",
-    ok: "border-ok/40 bg-ok/5 text-ok",
+    warn: "border-line-strong bg-card-2 text-ink",
+    bad: "border-ink/60 bg-card-2 text-ink",
+    ok: "border-line-strong bg-card text-ink",
   } as const;
   return (
     <div role="status" className={cn("rb-notice flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm", tones[tone], className)}>

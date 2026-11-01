@@ -57,7 +57,7 @@ export function RewardPicker({
   return (
     <section
       aria-labelledby="gift-title"
-      className="relative overflow-hidden rounded-[24px] border border-ink/80 bg-card-2 p-5 animate-reveal"
+      className="relative overflow-hidden rounded-[24px] border border-ink/80 bg-card-2 p-4 animate-reveal min-[360px]:p-5"
     >
       <div className="pointer-events-none absolute inset-x-0 -top-40 flex justify-center opacity-25" aria-hidden="true">
         <HaloRays size={420} rays={48} className="animate-spin-slow" />
@@ -67,10 +67,10 @@ export function RewardPicker({
         <span className="grid h-14 w-14 animate-pop place-items-center rounded-full bg-ink text-bg shadow-[0_0_40px_rgba(255,255,255,0.35)]">
           <Gift className="h-7 w-7" aria-hidden="true" />
         </span>
-        <h2 id="gift-title" className="font-gothic text-4xl leading-none">
+        <h2 id="gift-title" className="text-balance font-gothic text-[clamp(1.9rem,9.5vw,2.25rem)] leading-none">
           {cycles.length > 1 ? `Tenés ${cycles.length} regalos para elegir` : "Tenés un regalo para elegir"}
         </h2>
-        <p className="max-w-xs font-serif text-base italic text-dim">
+        <p className="max-w-xs text-balance font-serif text-base italic text-dim">
           Completaste la tarjeta N° {String(cycle).padStart(2, "0")}. Elegí tu regalo y te damos un código para retirarlo.
         </p>
       </div>
@@ -80,7 +80,7 @@ export function RewardPicker({
           Ahora mismo no hay regalos disponibles. Volvé a mirar en unos días o consultanos por WhatsApp.
         </p>
       ) : (
-        <div role="radiogroup" aria-label="Regalos" className="stagger relative mt-5 grid grid-cols-2 gap-3">
+        <div role="radiogroup" aria-label="Regalos" className="stagger relative mt-5 grid grid-cols-2 gap-2.5 min-[360px]:gap-3">
           {rewards.map((r, i) => {
             const isSel = r.id === selected;
             return (
@@ -126,14 +126,19 @@ export function RewardPicker({
                     <Check className="h-4 w-4" strokeWidth={3} />
                   </span>
                   {typeof r.stock === "number" && r.stock <= 5 && (
-                    <span className="absolute bottom-2 left-2 rounded-full bg-bg/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-warn">
+                    <span className="absolute bottom-2 left-2 rounded-full bg-bg/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ink">
                       {r.stock === 1 ? "Queda 1" : `Quedan ${r.stock}`}
                     </span>
                   )}
                 </div>
                 <div className="flex flex-1 flex-col gap-0.5 p-3">
-                  <p className="text-sm font-semibold leading-tight text-ink">{r.name}</p>
-                  {r.description && <p className="line-clamp-2 text-xs text-dim">{r.description}</p>}
+                  {/* The name is never clamped: people must see exactly what they pick. */}
+                  <p className="text-sm font-semibold leading-tight text-ink [overflow-wrap:anywhere]">{r.name}</p>
+                  {r.description && (
+                    <p className={cn("text-xs text-dim [overflow-wrap:anywhere]", !isSel && "line-clamp-3")}>
+                      {r.description}
+                    </p>
+                  )}
                 </div>
               </button>
             );
@@ -144,9 +149,20 @@ export function RewardPicker({
       <div className="relative mt-5 flex flex-col gap-3">
         <ErrorText>{error}</ErrorText>
         {rewards.length > 0 && (
-          <Button size="lg" block disabled={!selected} loading={saving} onClick={redeem}>
-            {chosen ? `Elegir ${chosen.name}` : "Elegí un regalo"}
-          </Button>
+          <>
+            <p className="text-center text-sm text-dim [overflow-wrap:anywhere]" aria-live="polite">
+              {chosen ? (
+                <>
+                  Elegiste: <span className="font-semibold text-ink">{chosen.name}</span>
+                </>
+              ) : (
+                "Tocá un regalo para elegirlo."
+              )}
+            </p>
+            <Button size="lg" block disabled={!selected} loading={saving} onClick={redeem}>
+              {chosen ? "Confirmar regalo" : "Elegí un regalo"}
+            </Button>
+          </>
         )}
       </div>
     </section>

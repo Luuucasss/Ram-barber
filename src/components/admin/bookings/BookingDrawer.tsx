@@ -153,30 +153,39 @@ export function BookingDrawer({
       )
     : "";
 
+  // Phones: big 2-up grid of actions at the bottom of the sheet (thumb zone); sm+: compact row.
+  const act = "h-12 text-[15px] sm:h-9 sm:text-sm";
   const footer =
     b && !rescheduling ? (
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         {b.status === "confirmed" ? (
           <>
-            <Button size="sm" onClick={() => setStatus("completed")} loading={busy === "completed"} disabled={!!busy}>
+            <Button
+              size="sm"
+              className={act}
+              onClick={() => setStatus("completed")}
+              loading={busy === "completed"}
+              disabled={!!busy}
+            >
               <Check className="h-4 w-4" aria-hidden="true" /> Asistió
             </Button>
             <Button
               size="sm"
               variant="outline"
+              className={act}
               onClick={() => setStatus("no_show")}
               loading={busy === "no_show"}
               disabled={!!busy}
             >
               <UserX className="h-4 w-4" aria-hidden="true" /> No vino
             </Button>
-            <Button size="sm" variant="outline" onClick={() => setRescheduling(true)} disabled={!!busy}>
+            <Button size="sm" variant="outline" className={act} onClick={() => setRescheduling(true)} disabled={!!busy}>
               <CalendarClock className="h-4 w-4" aria-hidden="true" /> Reprogramar
             </Button>
             <ConfirmButton
               size="sm"
               variant="ghost"
-              className="ml-auto"
+              className={cn(act, "sm:ml-auto")}
               onConfirm={() => setStatus("cancelled")}
               loading={busy === "cancelled"}
               disabled={!!busy}
@@ -190,6 +199,7 @@ export function BookingDrawer({
             <Button
               size="sm"
               variant="outline"
+              className={cn(act, b.status === "cancelled" && "col-span-2")}
               onClick={() => setStatus("confirmed")}
               loading={busy === "confirmed"}
               disabled={!!busy}
@@ -197,7 +207,13 @@ export function BookingDrawer({
               <RotateCcw className="h-4 w-4" aria-hidden="true" /> Restaurar
             </Button>
             {b.status === "no_show" && (
-              <Button size="sm" onClick={() => setStatus("completed")} loading={busy === "completed"} disabled={!!busy}>
+              <Button
+                size="sm"
+                className={act}
+                onClick={() => setStatus("completed")}
+                loading={busy === "completed"}
+                disabled={!!busy}
+              >
                 <Check className="h-4 w-4" aria-hidden="true" /> Asistió
               </Button>
             )}
@@ -205,6 +221,7 @@ export function BookingDrawer({
               <Button
                 size="sm"
                 variant="ghost"
+                className={act}
                 onClick={() => setStatus("no_show")}
                 loading={busy === "no_show"}
                 disabled={!!busy}
@@ -221,16 +238,18 @@ export function BookingDrawer({
     <Sheet
       open={open}
       onClose={onClose}
+      resetKey={b?._id}
       title={b ? b.clientName || formatPhone(b.clientPhone) : "Turno"}
       subtitle={
         b ? (
           <span className="flex flex-wrap items-center gap-2">
             <StatusPill status={b.status} />
-            <span className="tabular-nums">
-              {b.start}–{b.end}
+            <span>
+              <span className="tabular-nums">
+                {b.start}–{b.end}
+              </span>{" "}
+              · {today && b.date === today ? "Hoy" : formatDateLong(b.date)}
             </span>
-            <span aria-hidden="true">·</span>
-            <span>{today && b.date === today ? "Hoy" : formatDateLong(b.date)}</span>
           </span>
         ) : null
       }
@@ -258,19 +277,19 @@ export function BookingDrawer({
                     href={whatsappLink(b.clientPhone, reminder)}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-ink px-3 text-sm font-semibold text-bg transition-transform duration-150 ease-out active:scale-[0.97]"
+                    className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-ink px-3.5 text-sm sm:h-9 sm:px-3 font-semibold text-bg transition-transform duration-150 ease-out active:scale-[0.97]"
                   >
                     <MessageCircle className="h-4 w-4" aria-hidden="true" /> Recordatorio
                   </a>
                   <a
                     href={`tel:+549${b.clientPhone}`}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line-strong px-3 text-sm font-semibold transition-[transform,border-color] duration-150 ease-out hover:border-ink active:scale-[0.97]"
+                    className="inline-flex h-11 items-center gap-1.5 rounded-xl border border-line-strong px-3.5 text-sm tabular-nums sm:h-9 sm:px-3 font-semibold transition-[transform,border-color] duration-150 ease-out hover:border-ink active:scale-[0.97]"
                   >
                     <Phone className="h-4 w-4" aria-hidden="true" /> {formatPhone(b.clientPhone)}
                   </a>
                   <Link
                     href={`/admin/clientes/${b.clientId}`}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-sm text-dim transition-colors hover:bg-white/5 hover:text-ink"
+                    className="inline-flex h-11 items-center gap-1.5 rounded-xl px-3 text-sm text-dim sm:h-9 transition-colors hover:bg-white/5 hover:text-ink"
                   >
                     <UserRound className="h-4 w-4" aria-hidden="true" /> Ficha
                   </Link>
@@ -331,7 +350,7 @@ export function BookingDrawer({
                   onKeyDown={(e) => {
                     if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && notesDirty) saveNotes();
                   }}
-                  className="min-h-20 text-sm"
+                  className="min-h-20 text-base sm:text-sm"
                 />
                 <div
                   className={cn(
@@ -340,10 +359,10 @@ export function BookingDrawer({
                   )}
                   aria-hidden={!notesDirty}
                 >
-                  <Button size="sm" variant="ghost" onClick={() => setNotes(b.notes)} tabIndex={notesDirty ? 0 : -1}>
+                  <Button size="sm" variant="ghost" className="h-11 sm:h-9" onClick={() => setNotes(b.notes)} tabIndex={notesDirty ? 0 : -1}>
                     Descartar
                   </Button>
-                  <Button size="sm" variant="subtle" onClick={saveNotes} loading={busy === "notes"} tabIndex={notesDirty ? 0 : -1}>
+                  <Button size="sm" variant="subtle" className="h-11 sm:h-9" onClick={saveNotes} loading={busy === "notes"} tabIndex={notesDirty ? 0 : -1}>
                     Guardar notas
                   </Button>
                 </div>
@@ -401,7 +420,15 @@ function ClientStrip({ client }: { client: BookingClientSummary }) {
           <b className="font-semibold text-ink tabular-nums">{s.completed}</b> visitas
         </span>
         <span>
-          <b className={cn("font-semibold tabular-nums", s.noShows ? "text-warn" : "text-ink")}>{s.noShows}</b> no vino
+          <b
+            className={cn(
+              "font-semibold tabular-nums text-ink",
+              s.noShows > 0 && "underline decoration-dashed decoration-1 underline-offset-4",
+            )}
+          >
+            {s.noShows}
+          </b>{" "}
+          no vino
         </span>
         {client.loyalty.enabled && (
           <span>
@@ -411,7 +438,9 @@ function ClientStrip({ client }: { client: BookingClientSummary }) {
             </b>
           </span>
         )}
-        {client.loyalty.pendingGifts > 0 && <span className="text-warn">Regalo pendiente</span>}
+        {client.loyalty.pendingGifts > 0 && (
+          <span className="rounded-full border border-dashed border-ink/60 px-2 py-px text-xs font-medium text-ink">Regalo pendiente</span>
+        )}
       </div>
       {client.member && (
         <p className="inline-flex items-center gap-1.5 text-xs text-ink">
@@ -466,7 +495,7 @@ function Reschedule({
         <label htmlFor="resched-date" className="text-xs font-medium uppercase tracking-[0.14em] text-dim">
           Fecha
         </label>
-        <Input id="resched-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-11" />
+        <Input id="resched-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-12 text-base sm:h-11" />
       </div>
       <SlotPicker
         branchId={booking.branchId}
@@ -479,11 +508,11 @@ function Reschedule({
         disabledTime={date === booking.date ? booking.start : undefined}
       />
       <ErrorText>{error}</ErrorText>
-      <div className="flex gap-2">
-        <Button size="sm" onClick={submit} disabled={!time} loading={busy}>
+      <div className="sticky -bottom-5 -mx-5 -mb-5 flex gap-2 border-t border-line bg-card px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:m-0 sm:border-0 sm:bg-transparent sm:p-0">
+        <Button size="sm" className="h-12 flex-1 text-[15px] sm:h-9 sm:flex-none sm:text-sm" onClick={submit} disabled={!time} loading={busy}>
           {time ? `Mover a ${time}` : "Elegí un horario"}
         </Button>
-        <Button size="sm" variant="ghost" onClick={onCancel} disabled={busy}>
+        <Button size="sm" variant="ghost" className="h-12 text-[15px] sm:h-9 sm:text-sm" onClick={onCancel} disabled={busy}>
           Volver
         </Button>
       </div>

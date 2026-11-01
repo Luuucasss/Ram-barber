@@ -51,7 +51,7 @@ export function BranchStep({
               <MapPin className="h-4 w-4" aria-hidden="true" />
             </span>
             <div className="min-w-0">
-              <p className="text-lg font-semibold">{b.name}</p>
+              <p className="text-lg font-semibold [overflow-wrap:anywhere]">{b.name}</p>
               {b.address && <p className="mt-0.5 text-sm text-dim">{b.address}</p>}
             </div>
           </div>
@@ -64,9 +64,12 @@ export function BranchStep({
 export function IdentityBanner({
   identity,
   settings,
+  showUpcoming = true,
 }: {
   identity: IdentifyResult;
   settings: AppSettings;
+  /** Hide the "Ya tenés N turnos" line (e.g. when a limit notice already says it). */
+  showUpcoming?: boolean;
 }) {
   const { loyalty, upcomingCount, firstName } = identity;
   const perks: React.ReactNode[] = [];
@@ -97,11 +100,15 @@ export function IdentityBanner({
         {firstName ? `¡Hola, ${firstName}!` : "¡Bienvenido a RAM!"}
       </p>
       {perks.length > 0 && <div className="mt-2 flex flex-col gap-1 text-sm text-ink">{perks}</div>}
-      {upcomingCount > 0 && (
-        <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-dim">
-          <CalendarCheck className="h-3.5 w-3.5" aria-hidden="true" />
-          Ya tenés {upcomingCount} {upcomingCount === 1 ? "turno reservado" : "turnos reservados"}.
-          <Link href="/mis-turnos" className="font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-ink">
+      {showUpcoming && upcomingCount > 0 && (
+        <p className="mt-2 flex flex-wrap items-center gap-x-1.5 text-sm text-dim">
+          <CalendarCheck className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span>Ya tenés {upcomingCount} {upcomingCount === 1 ? "turno reservado" : "turnos reservados"}.</span>
+          {/* min-size grows the tap area to 44x44; negative margins keep the line's height and alignment. */}
+          <Link
+            href="/mis-turnos"
+            className="-mx-2.5 -my-3 inline-flex min-h-[44px] min-w-[44px] items-center justify-center px-3 font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-ink"
+          >
             Ver
           </Link>
         </p>
@@ -136,18 +143,17 @@ export function ServiceStep({
         const p = pricingFor(s, identity, settings);
         return (
           <OptionCard key={s._id} style={idx(i)} selected={selectedId === s._id} onClick={() => onSelect(s._id)}>
-            <div className="flex items-start justify-between gap-4 pr-8">
-              <div className="min-w-0">
-                <p className="text-lg font-semibold leading-snug">{s.name}</p>
-                {s.description && <p className="mt-1 text-sm leading-relaxed text-dim">{s.description}</p>}
-                <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-faint">
-                    <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {formatDuration(s.durationMin)}
-                  </span>
-                  {p.label && <Pill tone="ink">{p.label}</Pill>}
-                </div>
-              </div>
-              <PriceTag price={s.price} final={p.final} currency={settings.currency} className="pt-0.5 text-lg" />
+            {/* Only the first line reserves room for the check badge; the description gets the full width. */}
+            <div className="flex items-start justify-between gap-3 pr-8">
+              <p className="min-w-0 text-lg font-semibold leading-snug [overflow-wrap:anywhere]">{s.name}</p>
+              <PriceTag price={s.price} final={p.final} currency={settings.currency} className="shrink-0 whitespace-nowrap pt-0.5 text-lg" />
+            </div>
+            {s.description && <p className="mt-1 text-sm leading-relaxed text-dim">{s.description}</p>}
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-faint">
+                <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {formatDuration(s.durationMin)}
+              </span>
+              {p.label && <Pill tone="ink">{p.label}</Pill>}
             </div>
           </OptionCard>
         );
@@ -187,8 +193,8 @@ export function BarberStep({
         <OptionCard key={b._id} style={idx(i + 1)} selected={selectedId === b._id} onClick={() => onSelect(b._id)}>
           <div className="flex flex-col items-center gap-3 py-2 text-center">
             <Avatar name={b.name} photoUrl={b.photoUrl} size={72} />
-            <div className="min-w-0">
-              <p className="font-semibold">{b.name}</p>
+            <div className="w-full min-w-0">
+              <p className="font-semibold [overflow-wrap:anywhere]">{b.name}</p>
               {b.bio && <p className="mt-0.5 line-clamp-2 text-xs text-dim">{b.bio}</p>}
             </div>
           </div>

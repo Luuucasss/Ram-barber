@@ -110,28 +110,32 @@ export function ClientDetail({ id }: { id: string }) {
         <BackLink />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
-            <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">{c.name || "Sin nombre"}</h1>
+            <h1 className="line-clamp-2 break-words text-2xl font-bold tracking-tight sm:line-clamp-1 sm:text-3xl">{c.name || "Sin nombre"}</h1>
             <p className="mt-1 text-sm tabular-nums text-dim">
               {formatPhone(c.phone)} · cliente desde {numericDate(c.createdAt.slice(0, 10))}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
             <a
               href={whatsappLink(c.phone, greeting)}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line-strong px-3 text-sm font-semibold transition-[transform,border-color] duration-150 ease-out hover:border-ink active:scale-[0.97]"
+              className="inline-flex h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl border border-line-strong px-2 text-xs font-semibold transition-[transform,border-color] duration-150 ease-out hover:border-ink active:scale-[0.97] sm:h-9 sm:flex-row sm:gap-1.5 sm:px-3 sm:text-sm"
             >
               <MessageCircle className="h-4 w-4" aria-hidden="true" /> WhatsApp
             </a>
             <a
               href={`tel:+549${c.phone}`}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line-strong px-3 text-sm font-semibold transition-[transform,border-color] duration-150 ease-out hover:border-ink active:scale-[0.97]"
+              className="inline-flex h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl border border-line-strong px-2 text-xs font-semibold transition-[transform,border-color] duration-150 ease-out hover:border-ink active:scale-[0.97] sm:h-9 sm:flex-row sm:gap-1.5 sm:px-3 sm:text-sm"
             >
               <Phone className="h-4 w-4" aria-hidden="true" /> Llamar
             </a>
-            <Button size="sm" onClick={() => setNewOpen(true)}>
-              <CalendarPlus className="h-4 w-4" aria-hidden="true" /> Nuevo turno
+            <Button
+              size="sm"
+              className="h-14 min-w-0 flex-col gap-1 px-2 text-xs sm:h-9 sm:flex-row sm:gap-1.5 sm:px-3 sm:text-sm"
+              onClick={() => setNewOpen(true)}
+            >
+              <CalendarPlus className="h-4 w-4 shrink-0" aria-hidden="true" /> <span className="truncate">Nuevo turno</span>
             </Button>
           </div>
         </div>
@@ -147,13 +151,13 @@ export function ClientDetail({ id }: { id: string }) {
           ["No vino", s.noShows],
           ["Última visita", sinceDays(c.lastVisitAt, data.today)],
         ].map(([label, value], i) => (
-          <div key={label} className={cn("bg-card px-4 py-3", i === 4 && "col-span-2 sm:col-span-1")}>
-            <dt className="text-[11px] uppercase tracking-[0.16em] text-faint">{label}</dt>
+          <div key={label} className={cn("min-w-0 bg-card px-3 py-2.5 sm:px-4 sm:py-3", i === 4 && "col-span-2 sm:col-span-1")}>
+            <dt className="truncate text-[10px] uppercase tracking-[0.1em] text-faint sm:text-[11px] sm:tracking-[0.16em]">{label}</dt>
             <dd
               className={cn(
-                "mt-1 font-semibold tabular-nums leading-tight",
-                typeof value === "number" ? "text-2xl" : "text-base",
-                label === "No vino" && Number(value) > 0 && "text-warn",
+                "mt-1 truncate font-semibold tabular-nums leading-tight",
+                typeof value === "number" ? "text-xl sm:text-2xl" : "text-base",
+                label === "No vino" && Number(value) > 0 && "underline decoration-dashed decoration-1 underline-offset-4",
               )}
             >
               {value}
@@ -186,7 +190,7 @@ export function ClientDetail({ id }: { id: string }) {
                     value={notes}
                     maxLength={1000}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="min-h-24 text-sm"
+                    className="min-h-24 text-base sm:text-sm"
                   />
                 )}
               </Field>
@@ -201,6 +205,7 @@ export function ClientDetail({ id }: { id: string }) {
                   type="button"
                   size="sm"
                   variant="ghost"
+                  className="h-11 sm:h-9"
                   tabIndex={profileDirty ? 0 : -1}
                   onClick={() => {
                     setName(c.name);
@@ -209,7 +214,7 @@ export function ClientDetail({ id }: { id: string }) {
                 >
                   Descartar
                 </Button>
-                <Button type="submit" size="sm" loading={busy === "profile"} tabIndex={profileDirty ? 0 : -1}>
+                <Button type="submit" size="sm" className="h-11 px-5 sm:h-9 sm:px-3" loading={busy === "profile"} tabIndex={profileDirty ? 0 : -1}>
                   Guardar
                 </Button>
               </div>
@@ -232,9 +237,9 @@ export function ClientDetail({ id }: { id: string }) {
                         setSelected(b);
                         setDrawerOpen(true);
                       }}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-card-2"
+                      className="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-card-2 active:bg-card-2"
                     >
-                      <div className="w-20 shrink-0 tabular-nums">
+                      <div className="w-16 shrink-0 tabular-nums sm:w-20">
                         <p className="text-sm font-medium">{b.date === data.today ? "Hoy" : shortDate(b.date)}</p>
                         <p className="text-xs text-faint">{b.start}</p>
                       </div>
@@ -314,7 +319,7 @@ function BackLink() {
   return (
     <Link
       href="/admin/clientes"
-      className="inline-flex w-fit items-center gap-1.5 text-sm text-dim transition-colors hover:text-ink"
+      className="-my-2 inline-flex min-h-11 w-fit items-center gap-1.5 text-sm text-dim transition-colors hover:text-ink sm:my-0 sm:min-h-0"
     >
       <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Clientes
     </Link>

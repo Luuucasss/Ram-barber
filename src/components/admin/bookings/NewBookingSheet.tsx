@@ -6,6 +6,8 @@ import { Button, ErrorText, Field, Input, Select, Textarea } from "@/components/
 import { api } from "@/lib/client-api";
 import { formatDuration, formatPrice } from "@/lib/format";
 import { normalizePhone } from "@/lib/phone";
+import { cn } from "@/lib/utils";
+import { shortDate } from "./fmt";
 import { Sheet } from "./Sheet";
 import { SlotPicker } from "./SlotPicker";
 import type { AdminBooking } from "./types";
@@ -166,17 +168,32 @@ export function NewBookingSheet({
       subtitle="Para clientes que llaman o vienen sin reserva."
       footer={
         <div className="flex items-center justify-between gap-3">
-          <p className="min-w-0 truncate text-sm text-dim">
-            {service ? (
-              <>
-                {service.name} · {formatDuration(service.durationMin)} ·{" "}
-                <span className="text-ink">{formatPrice(service.price, catalog?.settings.currency)}</span>
-              </>
-            ) : (
-              "Completá los datos"
+          {/* Recap of what is about to be booked, incl. the time once the slot grid has scrolled away. */}
+          <div className="min-w-0 text-sm leading-snug" aria-live="polite">
+            {form.start && date && (
+              <p className="truncate font-semibold tabular-nums text-ink">
+                {form.start} · {shortDate(date)}
+              </p>
             )}
-          </p>
-          <Button form="new-booking" type="submit" size="sm" loading={busy} disabled={!canSubmit}>
+            <p className={cn("min-w-0 text-dim", form.start ? "line-clamp-1" : "line-clamp-2 sm:line-clamp-1")}>
+              {service ? (
+                <>
+                  {service.name} · {formatDuration(service.durationMin)} ·{" "}
+                  <span className="text-ink">{formatPrice(service.price, catalog?.settings.currency)}</span>
+                </>
+              ) : (
+                "Completá los datos"
+              )}
+            </p>
+          </div>
+          <Button
+            form="new-booking"
+            type="submit"
+            size="sm"
+            className="h-12 shrink-0 px-5 text-[15px] sm:h-9 sm:px-3 sm:text-sm"
+            loading={busy}
+            disabled={!canSubmit}
+          >
             Crear turno
           </Button>
         </div>
@@ -198,6 +215,7 @@ export function NewBookingSheet({
                     type="tel"
                     inputMode="tel"
                     autoComplete="off"
+                    enterKeyHint="next"
                     value={form.phone}
                     aria-invalid={!!phoneError}
                     onChange={(e) => {
@@ -220,6 +238,8 @@ export function NewBookingSheet({
                   id={id}
                   value={form.name}
                   autoComplete="off"
+                  autoCapitalize="words"
+                  enterKeyHint="next"
                   maxLength={80}
                   onChange={(e) => set("name", e.target.value)}
                   className="h-11"
@@ -234,7 +254,7 @@ export function NewBookingSheet({
                 <UserCheck className="h-3.5 w-3.5" aria-hidden="true" /> Cliente existente
               </span>
               <span>{known.stats.completed} visitas</span>
-              {known.stats.noShows > 0 && <span className="text-warn">{known.stats.noShows} no vino</span>}
+              {known.stats.noShows > 0 && <span className="font-medium text-ink underline decoration-dashed underline-offset-2">{known.stats.noShows} no vino</span>}
               <span>
                 Tarjeta {known.stamps}/{known.cardSize}
               </span>
@@ -260,7 +280,35 @@ export function NewBookingSheet({
             </Field>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          {/* Few options → one-tap chips (faster at the counter); long catalogs fall back to selects. */}
+          {services.length && services.length <= 8 ? (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium uppercase tracking-[0.14em] text-dim">Servicio</span>
+              <div role="radiogroup" aria-label="Servicio" className="grid grid-cols-2 gap-2">
+                {services.map((s) => {
+                  const active = form.serviceId === s._id;
+                  return (
+                    <button
+                      key={s._id}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => set("serviceId", s._id)}
+                      className={cn(
+                        "flex min-h-16 min-w-0 flex-col items-start justify-center gap-0.5 rounded-xl border px-3 py-2.5 text-left transition-[background-color,border-color,color,transform] duration-150 ease-out active:scale-[0.97]",
+                        active ? "border-ink bg-ink text-bg" : "border-line bg-surface text-ink hover:border-line-strong",
+                      )}
+                    >
+                      <span className="line-clamp-2 break-words text-sm font-semibold leading-tight">{s.name}</span>
+                      <span className={cn("text-xs tabular-nums", active ? "text-bg/70" : "text-dim")}>
+                        {formatDuration(s.durationMin)} · {formatPrice(s.price, catalog.settings.currency)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
             <Field label="Servicio">
               {(id) => (
                 <Select
@@ -279,6 +327,33 @@ export function NewBookingSheet({
                 </Select>
               )}
             </Field>
+          )}
+
+          {barbers.length <= 6 ? (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium uppercase tracking-[0.14em] text-dim">Barbero</span>
+              <div role="radiogroup" aria-label="Barbero" className="flex flex-wrap gap-2">
+                {[{ _id: "any", name: "Cualquiera" }, ...barbers].map((b) => {
+                  const active = form.barberId === b._id;
+                  return (
+                    <button
+                      key={b._id}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => set("barberId", b._id)}
+                      className={cn(
+                        "inline-flex h-11 max-w-full items-center rounded-full border px-4 text-sm font-medium transition-[background-color,border-color,color,transform] duration-150 ease-out active:scale-[0.97]",
+                        active ? "border-ink bg-ink text-bg" : "border-line bg-surface text-ink hover:border-line-strong",
+                      )}
+                    >
+                      <span className="truncate">{b.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
             <Field label="Barbero">
               {(id) => (
                 <Select id={id} value={form.barberId} onChange={(e) => set("barberId", e.target.value)} className="h-11">
@@ -291,7 +366,7 @@ export function NewBookingSheet({
                 </Select>
               )}
             </Field>
-          </div>
+          )}
 
           <Field label="Fecha">
             {(id) => (
@@ -318,7 +393,7 @@ export function NewBookingSheet({
                 value={form.notes}
                 maxLength={500}
                 onChange={(e) => set("notes", e.target.value)}
-                className="min-h-16 text-sm"
+                className="min-h-16 text-base sm:text-sm"
               />
             )}
           </Field>

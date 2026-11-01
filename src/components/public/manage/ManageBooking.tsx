@@ -115,7 +115,7 @@ export function ManageBooking({ token }: { token: string }) {
         <Modal open={cancelOpen} onClose={() => !cancelling && setCancelOpen(false)} title="¿Cancelar tu turno?">
           <div className="flex flex-col gap-4">
             <p className="text-sm text-dim">
-              Vas a cancelar <span className="text-ink">{state.data.booking.serviceName}</span> del{" "}
+              Vas a cancelar <span className="text-ink">{state.data.booking.serviceName}</span>:{" "}
               <span className="text-ink">
                 {relativeDay(state.data.booking.date, state.data.today).toLowerCase()} a las {state.data.booking.start} hs
               </span>
@@ -124,7 +124,8 @@ export function ManageBooking({ token }: { token: string }) {
             <ErrorText>{cancelError}</ErrorText>
             <div className="flex flex-col gap-2">
               <Button
-                variant="danger"
+                variant="outline"
+                className="border-ink"
                 size="lg"
                 block
                 loading={cancelling}
@@ -225,22 +226,25 @@ function Ready({
 
       {/* Hero */}
       <header className="stagger flex flex-col items-center gap-3 pt-2 text-center">
-        <Pill tone={pill.tone} style={{ "--i": 0 } as React.CSSProperties}>
+        <Pill tone={pill.tone} className={pill.className} style={{ "--i": 0 } as React.CSSProperties}>
           {active && (
             <span className="relative flex h-1.5 w-1.5" aria-hidden="true">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ok opacity-60" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-ok" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink opacity-60" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-ink" />
             </span>
           )}
           {pill.label}
         </Pill>
-        <h1 className="font-gothic text-5xl leading-[0.95] text-ink sm:text-6xl" style={{ "--i": 1 } as React.CSSProperties}>
+        <h1
+          className="max-w-full text-balance break-words font-gothic text-[clamp(2.4rem,12.5vw,3rem)] leading-[0.95] text-ink sm:text-6xl"
+          style={{ "--i": 1 } as React.CSSProperties}
+        >
           {head.title}
           {booking.clientName && active ? (
-            <span className="mt-1 block font-serif text-2xl italic text-dim">{booking.clientName}</span>
+            <span className="mt-1 block truncate font-serif text-2xl italic text-dim">{booking.clientName}</span>
           ) : null}
         </h1>
-        <p className="max-w-sm font-serif text-lg italic text-dim" style={{ "--i": 2 } as React.CSSProperties}>
+        <p className="max-w-sm text-balance font-serif text-lg italic text-dim" style={{ "--i": 2 } as React.CSSProperties}>
           {head.body(data)}
         </p>
       </header>
@@ -267,11 +271,11 @@ function FlashBanner({ title, body }: { title: string; body: string }) {
       <span className="grid h-10 w-10 shrink-0 animate-pop place-items-center rounded-full bg-ink text-bg [animation-delay:120ms]">
         <Check className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
       </span>
-      <div>
+      <div className="relative z-10 min-w-0 pr-8">
         <p className="font-semibold text-ink">{title}</p>
         <p className="text-sm text-dim">{body}</p>
       </div>
-      <Rose size={90} tone="dark" className="pointer-events-none absolute -right-6 -top-5 opacity-25" />
+      <Rose size={90} tone="dark" className="pointer-events-none absolute -right-8 -top-6 opacity-20" />
     </div>
   );
 }
@@ -295,10 +299,10 @@ function Ticket({ data, state }: { data: BookingPayload; state: BookingState }) 
       </div>
 
       {/* Date + time */}
-      <div className="relative flex items-center gap-4 p-5">
+      <div className="relative flex items-center gap-3.5 p-4 min-[360px]:gap-4 min-[360px]:p-5">
         <div
           className={cn(
-            "flex h-[88px] w-[76px] shrink-0 flex-col items-center justify-center rounded-2xl border",
+            "flex h-[80px] w-[68px] shrink-0 flex-col items-center justify-center rounded-2xl border min-[360px]:h-[88px] min-[360px]:w-[76px]",
             muted ? "border-line text-dim" : "border-ink bg-ink text-bg",
           )}
         >
@@ -310,7 +314,12 @@ function Ticket({ data, state }: { data: BookingPayload; state: BookingState }) 
           <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-faint">
             {relativeDay(booking.date, data.today)}
           </p>
-          <p className={cn("font-serif text-5xl font-semibold leading-none tabular-nums", muted && "text-dim line-through decoration-1")}>
+          <p
+            className={cn(
+              "font-serif text-[2.6rem] font-semibold leading-none tabular-nums min-[360px]:text-5xl",
+              muted && "text-dim line-through decoration-1",
+            )}
+          >
             {booking.start}
           </p>
           <p className="mt-1 text-sm text-dim">
@@ -326,7 +335,7 @@ function Ticket({ data, state }: { data: BookingPayload; state: BookingState }) 
         <span className="absolute -right-3 h-6 w-6 rounded-full border border-line bg-bg" />
       </div>
 
-      <dl className="relative grid gap-3.5 p-5 text-sm">
+      <dl className="relative grid gap-3.5 p-4 text-sm min-[360px]:p-5">
         <Row icon={<Scissors className="h-4 w-4" />} label="Servicio" value={booking.serviceName} />
         <Row icon={<User className="h-4 w-4" />} label="Barbero" value={booking.barberName || "A confirmar"} />
         <Row
@@ -351,7 +360,7 @@ function Ticket({ data, state }: { data: BookingPayload; state: BookingState }) 
               <span className="inline-flex flex-wrap items-baseline gap-2">
                 <span className="font-semibold">{formatPrice(booking.finalPrice, data.currency)}</span>
                 <span className="text-xs text-faint line-through">{formatPrice(booking.price, data.currency)}</span>
-                <Pill tone="ok" className="py-0 text-[10px]">
+                <Pill tone="neutral" className="border-ink py-0 text-[10px] text-ink">
                   {booking.discountPercent}% OFF
                 </Pill>
               </span>
@@ -371,8 +380,8 @@ function Row({ icon, label, value }: { icon: React.ReactNode; label: string; val
       <span className="mt-0.5 text-faint" aria-hidden="true">
         {icon}
       </span>
-      <dt className="w-20 shrink-0 text-dim">{label}</dt>
-      <dd className="min-w-0 flex-1 text-right font-medium text-ink">{value}</dd>
+      <dt className="w-[4.5rem] shrink-0 text-dim min-[360px]:w-20">{label}</dt>
+      <dd className="min-w-0 flex-1 break-words text-right font-medium text-ink">{value}</dd>
     </div>
   );
 }
@@ -426,21 +435,17 @@ function QuickLinks({ data }: { data: BookingPayload }) {
   }
 
   const tile =
-    "flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-line bg-card py-3.5 text-xs font-medium text-dim transition-[transform,border-color,color] duration-150 ease-out hover:border-line-strong hover:text-ink active:scale-[0.96]";
+    "flex min-h-[76px] flex-col items-center justify-center gap-1.5 rounded-2xl border border-line bg-card px-1.5 py-3.5 text-center text-xs font-medium leading-tight text-dim transition-[transform,border-color,color] duration-150 ease-out hover:border-line-strong hover:text-ink active:scale-[0.96]";
 
   return (
     <div className="flex flex-col gap-2.5">
-      <div className="grid grid-cols-3 gap-2.5">
-        {mapsUrl ? (
+      {/* No address configured → no dead "Cómo llegar" tile; the other two share the row. */}
+      <div className={cn("grid gap-2 min-[360px]:gap-2.5", mapsUrl ? "grid-cols-3" : "grid-cols-2")}>
+        {mapsUrl && (
           <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className={tile}>
             <Navigation className="h-5 w-5 text-ink" aria-hidden="true" />
             Cómo llegar
           </a>
-        ) : (
-          <span className={cn(tile, "pointer-events-none opacity-40")}>
-            <Navigation className="h-5 w-5" aria-hidden="true" />
-            Cómo llegar
-          </span>
         )}
         <a href={calUrl} target="_blank" rel="noopener noreferrer" className={tile}>
           <CalendarPlus className="h-5 w-5 text-ink" aria-hidden="true" />
@@ -455,13 +460,13 @@ function QuickLinks({ data }: { data: BookingPayload }) {
         </button>
       </div>
 
-      <div className="flex items-center gap-3 rounded-2xl border border-dashed border-line px-4 py-3">
+      <div className="flex items-center gap-3 rounded-2xl border border-dashed border-line py-2.5 pl-4 pr-2.5">
         <p className="min-w-0 flex-1 text-xs text-dim">Guardá este link: desde acá podés cambiar o cancelar tu turno.</p>
         <button
           type="button"
           onClick={copy}
           aria-label={copied ? "Link copiado" : "Copiar link"}
-          className="relative inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border border-line-strong px-3 text-xs font-semibold text-ink transition-[transform,border-color] duration-150 ease-out hover:border-ink active:scale-[0.96]"
+          className="relative inline-flex h-11 shrink-0 items-center gap-2 rounded-xl border border-line-strong px-3 text-xs font-semibold text-ink transition-[transform,border-color] duration-150 ease-out hover:border-ink active:scale-[0.96]"
         >
           <span className="relative h-4 w-4" aria-hidden="true">
             <Copy
@@ -505,7 +510,7 @@ function Actions({
         <Button size="lg" block onClick={onReschedule}>
           <CalendarClock className="h-5 w-5" /> Reprogramar
         </Button>
-        <Button variant="danger" size="lg" block onClick={onCancel}>
+        <Button variant="outline" size="lg" block onClick={onCancel}>
           <XCircle className="h-5 w-5" /> Cancelar turno
         </Button>
         <p className="mt-1 text-center text-xs text-faint">
@@ -518,7 +523,7 @@ function Actions({
   if (tooLate) {
     const msg = `¡Hola! Tengo un turno ${relativeDay(booking.date, data.today).toLowerCase()} a las ${booking.start} (${booking.serviceName}${booking.barberName ? ` con ${booking.barberName}` : ""}) y necesito cambiarlo o cancelarlo.`;
     return (
-      <div className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-warn/30 bg-warn/5 p-5">
+      <div className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-dashed border-line-strong bg-card p-5">
         <p className="font-semibold text-ink">Ya no se puede cambiar online</p>
         <p className="text-sm text-dim">
           Los turnos se pueden cambiar o cancelar hasta {hoursText(data.cancelLimitHours)} antes. Si te surgió algo,
@@ -568,13 +573,20 @@ function hoursText(h: number) {
 
 function NotFound() {
   return (
-    <div className="flex flex-col items-center gap-5 pt-8 text-center animate-reveal">
+    <div className="flex flex-col items-center gap-5 pt-12 text-center animate-reveal">
+      {/* Halo sized/offset so it stays clear of the shell header; text is positioned so it paints above it. */}
       <div className="relative grid place-items-center">
-        <HaloRays size={260} rays={36} className="absolute animate-spin-slow opacity-20" />
+        <HaloRays
+          size={200}
+          rays={36}
+          className="pointer-events-none absolute animate-spin-slow opacity-20"
+        />
         <Rose size={96} tone="light" className="relative" />
       </div>
-      <h1 className="font-gothic text-5xl leading-none">No encontramos este turno</h1>
-      <p className="max-w-xs font-serif text-lg italic text-dim">
+      <h1 className="relative text-balance font-gothic text-[clamp(2.4rem,12.5vw,3rem)] leading-none">
+        No encontramos este turno
+      </h1>
+      <p className="relative max-w-xs text-balance font-serif text-lg italic text-dim">
         Puede que el link esté incompleto o que sea de otro turno. Buscalo con tu teléfono.
       </p>
       <div className="mt-2 flex w-full flex-col gap-2.5">

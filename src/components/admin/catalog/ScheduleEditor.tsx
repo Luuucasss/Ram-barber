@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Copy, Plus, X } from "lucide-react";
+import { AlertCircle, Copy, Plus, X } from "lucide-react";
 import { Toggle } from "@/components/ui";
 import { dayName } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -130,13 +130,16 @@ export function ScheduleEditor({
               else rows.current.delete(day);
             }}
             className={cn(
-              "rounded-2xl border px-3 py-3 transition-colors duration-200 sm:px-4",
+              "rounded-2xl border px-2.5 py-2 transition-colors duration-200 md:px-4 md:py-3",
               d.enabled ? "border-line bg-surface" : "border-line/60 bg-transparent",
-              error && showErrors && "border-bad/50",
+              error && showErrors && "border-ink/70",
             )}
           >
-            <div className="flex flex-wrap items-start gap-x-4 gap-y-3 sm:flex-nowrap">
-              <div className="flex h-10 w-36 shrink-0 items-center">
+            {/* Stacked layout (times on their own full-width row) up to md: the dialog is never wider than
+                672px, so a single desktop row only fits from md. Touch sizing is keyed on pointer, not width,
+                so a phone in landscape keeps 44px targets and 16px inputs. */}
+            <div className="flex flex-wrap items-start gap-x-4 gap-y-1 md:flex-nowrap md:gap-x-3 md:gap-y-3">
+              <div className="flex h-11 min-w-0 shrink-0 items-center md:w-32 md:pointer-fine:h-10 [&>label]:min-h-11">
                 <Toggle
                   checked={d.enabled}
                   onChange={(v) => toggleDay(day, v)}
@@ -144,11 +147,20 @@ export function ScheduleEditor({
                 />
               </div>
 
-              <div className="order-last flex w-full min-w-0 flex-col gap-2 sm:order-none sm:w-auto sm:flex-1">
+              <div className="order-last flex w-full min-w-0 flex-col gap-2 md:order-none md:w-auto md:flex-1">
                 {d.enabled ? (
                   <div className="flex animate-[fade_180ms_ease-out_both] flex-col gap-2">
                     {d.ranges.map((r, i) => (
-                      <div key={i} className="flex items-center gap-2">
+                      <div
+                        key={i}
+                        className={cn(
+                          "grid items-center gap-1.5 md:flex md:gap-2",
+                          // < 360px the "a" separator is dropped so both times keep room for "09:30 a. m.".
+                          d.ranges.length > 1
+                            ? "grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_2.75rem] max-[359px]:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.25rem]"
+                            : "grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] max-[359px]:grid-cols-2",
+                        )}
+                      >
                         <TimeInput
                           label={`${dayName(day)}: inicio del turno ${i + 1}`}
                           value={r.start}
@@ -157,7 +169,7 @@ export function ScheduleEditor({
                             patchDay(day, (s) => ({ ...s, ranges: s.ranges.map((x, j) => (j === i ? { ...x, start: v } : x)) }))
                           }
                         />
-                        <span className="text-xs text-faint">a</span>
+                        <span className="text-xs text-faint max-[359px]:hidden">a</span>
                         <TimeInput
                           label={`${dayName(day)}: fin del turno ${i + 1}`}
                           value={r.end}
@@ -166,23 +178,23 @@ export function ScheduleEditor({
                             patchDay(day, (s) => ({ ...s, ranges: s.ranges.map((x, j) => (j === i ? { ...x, end: v } : x)) }))
                           }
                         />
-                        {d.ranges.length > 1 && (
+                        {d.ranges.length > 1 ? (
                           <button
                             type="button"
                             onClick={() => patchDay(day, (s) => ({ ...s, ranges: s.ranges.filter((_, j) => j !== i) }))}
-                            className="rounded-lg p-2 text-faint transition-colors hover:bg-white/5 hover:text-ink"
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-faint transition-colors hover:bg-white/5 hover:text-ink max-[359px]:w-9 md:shrink-0 md:pointer-fine:h-auto md:pointer-fine:w-auto md:pointer-fine:p-2"
                             aria-label={`Quitar turno ${i + 1} del ${dayName(day)}`}
                           >
                             <X className="h-4 w-4" />
                           </button>
-                        )}
+                        ) : null}
                       </div>
                     ))}
                     {d.ranges.length < MAX_RANGES && (
                       <button
                         type="button"
                         onClick={() => addRange(day)}
-                        className="inline-flex w-fit items-center gap-1.5 rounded-lg px-1 py-1 text-xs font-medium text-dim transition-colors hover:text-ink"
+                        className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-lg px-1 text-sm font-medium text-dim transition-colors hover:text-ink sm:pointer-fine:min-h-0 sm:pointer-fine:py-1 sm:pointer-fine:text-xs"
                       >
                         <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                         {d.ranges.length ? "Turno cortado" : "Agregar horario"}
@@ -190,11 +202,12 @@ export function ScheduleEditor({
                     )}
                   </div>
                 ) : (
-                  <p className="flex h-10 items-center text-sm text-faint">Cerrado</p>
+                  <p className="hidden h-10 items-center text-sm text-faint md:flex">Cerrado</p>
                 )}
               </div>
 
-              <div className="ml-auto flex h-10 items-center gap-1">
+              <div className="ml-auto flex h-11 items-center gap-1 md:pointer-fine:h-10">
+                {!d.enabled && <span className="text-sm text-faint md:hidden">Cerrado</span>}
                 {d.enabled && <span className="text-xs tabular-nums text-faint">{formatHours(dayTotal)}</span>}
                 {d.enabled && d.ranges.length > 0 && !error && (
                   <CopyMenu
@@ -207,7 +220,8 @@ export function ScheduleEditor({
               </div>
             </div>
             {error && (
-              <p className="mt-2 text-xs text-bad" role="alert">
+              <p className="mt-2 flex items-start gap-1.5 text-xs font-medium text-ink" role="alert">
+                <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 {error}
               </p>
             )}
@@ -246,7 +260,10 @@ function TimeInput({
       aria-label={label}
       aria-invalid={invalid || undefined}
       onChange={(e) => onChange(e.target.value)}
-      className="h-10 w-[7.25rem] rounded-xl border border-line bg-bg px-3 text-sm tabular-nums text-ink transition-colors focus:border-ink focus:outline-none aria-[invalid=true]:border-bad/60"
+      // Fills its grid cell up to md, fixed width (wide enough for "09:30 a. m." + clock icon in 12-hour
+      // locales) from md. Touch screens (any width) get 16px text (no iOS zoom-on-focus) and no clock icon,
+      // since the OS picker opens on tap anyway.
+      className="h-11 w-full min-w-0 rounded-xl border border-line bg-bg px-2 text-center text-base tabular-nums text-ink transition-colors focus:border-ink focus:outline-none max-[359px]:px-1.5 aria-[invalid=true]:border-ink aria-[invalid=true]:shadow-[0_0_0_1px_var(--color-ink)] max-sm:[&::-webkit-calendar-picker-indicator]:hidden pointer-coarse:[&::-webkit-calendar-picker-indicator]:hidden md:w-[8.25rem] md:shrink-0 md:px-2.5 md:text-left md:pointer-fine:h-10 md:pointer-fine:text-sm"
     />
   );
 }
@@ -294,12 +311,13 @@ function CopyMenu({
         aria-label={`Copiar horario del ${dayLabel}`}
         title="Copiar este horario a otros días"
         className={cn(
-          "inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-colors",
+          "inline-flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-colors sm:pointer-fine:h-9 sm:pointer-fine:min-w-0",
           open ? "bg-white/10 text-ink" : "text-dim hover:bg-white/5 hover:text-ink",
         )}
       >
         <Copy className="h-3.5 w-3.5" aria-hidden="true" />
-        <span className="hidden sm:inline">Copiar</span>
+        {/* From md the row is single-line and the dialog tops out at 672px: icon only (tooltip + aria-label). */}
+        <span className="hidden sm:inline md:hidden">Copiar</span>
       </button>
       {open && (
         <div
@@ -314,7 +332,7 @@ function CopyMenu({
               type="button"
               role="menuitem"
               onClick={() => onPick(t.days)}
-              className="block w-full rounded-xl px-2.5 py-2 text-left text-sm text-ink transition-colors hover:bg-white/5"
+              className="block min-h-11 w-full rounded-xl px-2.5 py-2 text-left text-sm text-ink transition-colors hover:bg-white/5 sm:pointer-fine:min-h-0"
             >
               {t.label}
             </button>

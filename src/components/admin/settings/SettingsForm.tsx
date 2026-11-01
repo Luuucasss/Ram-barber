@@ -235,7 +235,7 @@ export function SettingsForm({ initial }: { initial: AppSettings }) {
         {/* Negocio */}
         <Card className="flex flex-col gap-5 p-4 sm:p-5">
           <GroupTitle icon={Store} title="Negocio" />
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <Field label="Nombre" error={errors.businessName}>
               {(id) => <Input id={id} value={draft.businessName} onChange={(e) => set("businessName", e.target.value)} maxLength={60} aria-invalid={!!errors.businessName} />}
             </Field>
@@ -244,24 +244,35 @@ export function SettingsForm({ initial }: { initial: AppSettings }) {
             </Field>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-start">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
             <Field
               label="Logo (URL)"
               error={errors.logoUrl}
               hint="Imagen negra sobre fondo blanco: en el sitio se invierte a blanco automáticamente. Vacío = logo por defecto."
             >
-              {(id) => <Input id={id} value={draft.logoUrl} onChange={(e) => set("logoUrl", e.target.value)} placeholder="/logo.jpg" aria-invalid={!!errors.logoUrl} />}
+              {(id) => (
+                <Input
+                  id={id}
+                  inputMode="url"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  value={draft.logoUrl}
+                  onChange={(e) => set("logoUrl", e.target.value)}
+                  placeholder="/logo.jpg"
+                  aria-invalid={!!errors.logoUrl}
+                />
+              )}
             </Field>
             <LogoPreview src={draft.logoUrl.trim()} />
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <Field
               label="WhatsApp"
               error={errors.whatsapp}
               hint={
                 draft.whatsapp && !errors.whatsapp ? (
-                  <a href={`https://wa.me/${draft.whatsapp}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-ink underline underline-offset-4">
+                  <a href={`https://wa.me/${draft.whatsapp}`} target="_blank" rel="noreferrer" className="-my-3.5 inline-flex items-center gap-1 py-3.5 text-ink underline underline-offset-4 sm:my-0 sm:py-0">
                     Probar en WhatsApp <ExternalLink className="h-3 w-3" aria-hidden="true" />
                   </a>
                 ) : (
@@ -272,7 +283,9 @@ export function SettingsForm({ initial }: { initial: AppSettings }) {
               {(id) => (
                 <Input
                   id={id}
-                  inputMode="numeric"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="off"
                   value={draft.whatsapp}
                   onChange={(e) => set("whatsapp", e.target.value.replace(/\D/g, "").slice(0, 15))}
                   placeholder="5493513704782"
@@ -286,7 +299,7 @@ export function SettingsForm({ initial }: { initial: AppSettings }) {
               error={errors.instagram}
               hint={
                 draft.instagram ? (
-                  <a href={`https://instagram.com/${draft.instagram}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-ink underline underline-offset-4">
+                  <a href={`https://instagram.com/${draft.instagram}`} target="_blank" rel="noreferrer" className="-my-3.5 inline-flex items-center gap-1 py-3.5 text-ink underline underline-offset-4 sm:my-0 sm:py-0">
                     Ver @{draft.instagram} <ExternalLink className="h-3 w-3" aria-hidden="true" />
                   </a>
                 ) : (
@@ -297,7 +310,17 @@ export function SettingsForm({ initial }: { initial: AppSettings }) {
               {(id) => (
                 <div className="relative">
                   <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-dim">@</span>
-                  <Input id={id} value={draft.instagram} onChange={(e) => set("instagram", cleanInstagram(e.target.value))} className="pl-8" placeholder="ramhairstudio" aria-invalid={!!errors.instagram} />
+                  <Input
+                    id={id}
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    value={draft.instagram}
+                    onChange={(e) => set("instagram", cleanInstagram(e.target.value))}
+                    className="pl-8"
+                    placeholder="ramhairstudio"
+                    aria-invalid={!!errors.instagram}
+                  />
                 </div>
               )}
             </Field>
@@ -311,7 +334,7 @@ export function SettingsForm({ initial }: { initial: AppSettings }) {
         {/* Reservas */}
         <Card className="flex flex-col gap-5 p-4 sm:p-5">
           <GroupTitle icon={CalendarClock} title="Reservas" />
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <Field label="Intervalo entre horarios" error={errors.slotIntervalMin} hint="Cada cuánto se ofrecen turnos (ej.: 30 min → 9:00, 9:30, 10:00…).">
               {(id) => (
                 <Select id={id} value={draft.slotIntervalMin} onChange={(e) => set("slotIntervalMin", e.target.value)}>
@@ -331,10 +354,10 @@ export function SettingsForm({ initial }: { initial: AppSettings }) {
                     inputMode="numeric"
                     value={draft.bookingWindowDays}
                     onChange={(e) => set("bookingWindowDays", e.target.value.replace(/\D/g, "").slice(0, 2))}
-                    className="pr-28 tabular-nums"
+                    className="pr-44 tabular-nums"
                     aria-invalid={!!errors.bookingWindowDays}
                   />
-                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-faint">días de anticipación</span>
+                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 whitespace-nowrap text-sm text-faint">días de anticipación</span>
                 </div>
               )}
             </Field>
@@ -364,7 +387,7 @@ export function SettingsForm({ initial }: { initial: AppSettings }) {
                     className="pr-24 tabular-nums"
                     aria-invalid={!!errors.cancelLimitHours}
                   />
-                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-faint">horas antes</span>
+                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 whitespace-nowrap text-sm text-faint">horas antes</span>
                 </div>
               )}
             </Field>
@@ -413,7 +436,7 @@ export function SettingsForm({ initial }: { initial: AppSettings }) {
             hint={
               <span className="flex justify-between gap-3">
                 <span>Se muestra arriba en la página de inicio. Vacío = sin banner.</span>
-                <span className={cn("tabular-nums", draft.announcement.length > 300 && "text-bad")}>{draft.announcement.length}/300</span>
+                <span className={cn("tabular-nums", draft.announcement.length > 300 && "font-semibold text-ink")}>{draft.announcement.length}/300</span>
               </span>
             }
           >
@@ -430,8 +453,8 @@ export function SettingsForm({ initial }: { initial: AppSettings }) {
           </Field>
           {draft.announcement.trim() && (
             <div className="flex animate-[fade_200ms_ease-out_both] items-center justify-center gap-2 rounded-xl border border-line-strong bg-ink px-4 py-2 text-center text-sm font-medium text-bg">
-              <Rose size={16} tone="dark" />
-              <span>{draft.announcement.trim()}</span>
+              <Rose size={16} tone="dark" className="shrink-0" />
+              <span className="min-w-0 break-words">{draft.announcement.trim()}</span>
             </div>
           )}
         </Card>
@@ -439,11 +462,13 @@ export function SettingsForm({ initial }: { initial: AppSettings }) {
         <SetupCard />
       </div>
 
-      {/* Sticky save bar: slides up while there are unsaved changes, confirms the save, then leaves. */}
+      {/* Sticky save bar: slides up while there are unsaved changes, confirms the save, then leaves.
+          On phones/tablets it parks right above the admin tab bar (which already clears the home
+          indicator); on desktop there is no tab bar, so it pads for the safe area itself. */}
       <div
         className={cn(
-          "fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-[transform,opacity] duration-300 lg:left-[240px]",
-          barVisible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-[110%] opacity-0 duration-200",
+          "fixed inset-x-0 bottom-[var(--admin-tabbar-h,0px)] z-40 px-3 pb-3 transition-[transform,opacity] duration-300 lg:left-[240px] lg:pb-[max(0.75rem,env(safe-area-inset-bottom))]",
+          barVisible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-[calc(100%+var(--admin-tabbar-h,0px))] opacity-0 duration-200",
         )}
         style={{ transitionTimingFunction: "cubic-bezier(0.32, 0.72, 0, 1)" }}
         inert={!barVisible}
@@ -451,14 +476,14 @@ export function SettingsForm({ initial }: { initial: AppSettings }) {
         <div className="mx-auto flex max-w-3xl flex-col gap-2 rounded-2xl border border-line-strong bg-card-2/95 p-3 shadow-[0_-10px_60px_-20px_rgba(0,0,0,0.9)] backdrop-blur sm:flex-row sm:items-center sm:pl-5">
           <div className="flex min-w-0 flex-1 items-center gap-2 text-sm" aria-live="polite">
             {justSaved && !dirty ? (
-              <span className="flex items-center gap-2 text-ok">
+              <span className="flex items-center gap-2 text-ink">
                 <Check className="h-4 w-4" aria-hidden="true" /> Cambios guardados
               </span>
             ) : formError ? (
               <ErrorText className="border-0 bg-transparent p-0">{formError}</ErrorText>
             ) : (
               <span className="flex items-center gap-2 text-ink">
-                <span className="h-2 w-2 rounded-full bg-warn" aria-hidden="true" /> Tenés cambios sin guardar
+                <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-ink" aria-hidden="true" /> Tenés cambios sin guardar
               </span>
             )}
           </div>
@@ -468,7 +493,7 @@ export function SettingsForm({ initial }: { initial: AppSettings }) {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="flex-1 sm:flex-none"
+                className="h-11 flex-1 sm:flex-none sm:pointer-fine:h-9"
                 disabled={saving}
                 onClick={() => {
                   setDraft(toDraft(saved));
@@ -478,7 +503,7 @@ export function SettingsForm({ initial }: { initial: AppSettings }) {
               >
                 Descartar
               </Button>
-              <Button type="submit" size="sm" className="flex-1 sm:flex-none" loading={saving}>
+              <Button type="submit" size="sm" className="h-11 flex-[2] sm:flex-none sm:pointer-fine:h-9" loading={saving}>
                 Guardar cambios
               </Button>
             </div>
@@ -514,7 +539,7 @@ function LogoPreview({ src }: { src: string }) {
   return (
     <div className="flex h-24 w-full items-center justify-center overflow-hidden rounded-2xl border border-line bg-bg p-3 sm:mt-6 sm:w-40" aria-label="Vista previa del logo">
       {failed ? (
-        <span className="text-center text-xs text-bad">No se pudo cargar la imagen</span>
+        <span className="text-center text-xs font-medium text-ink">No se pudo cargar la imagen</span>
       ) : (
         <Logo key={effective} src={effective} className="max-h-full max-w-full animate-[fade_200ms_ease-out_both] object-contain" />
       )}

@@ -39,7 +39,7 @@ export function Plans({
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-center font-serif text-lg italic text-dim">
+      <p className="text-balance text-center font-serif text-lg italic text-dim">
         Pagás una vez por mes y tus cortes te salen más baratos.
       </p>
 
@@ -55,7 +55,7 @@ export function Plans({
               onClick={() => setSelected(p.id)}
               style={{ "--i": i } as React.CSSProperties}
               className={cn(
-                "relative flex items-start gap-4 rounded-[var(--radius-card)] border p-4 text-left",
+                "relative flex items-start gap-3 rounded-[var(--radius-card)] border p-4 text-left min-[360px]:gap-4",
                 "transition-[transform,border-color,background-color,box-shadow] duration-200 ease-out active:scale-[0.985]",
                 isSel
                   ? "border-ink bg-card-2 shadow-[0_0_0_1px_var(--color-ink),0_18px_50px_-30px_rgba(255,255,255,0.5)]"
@@ -77,23 +77,30 @@ export function Plans({
                   strokeWidth={3.5}
                 />
               </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-semibold text-ink">{p.name}</p>
-                  {i === 0 && plans.length > 1 && (
-                    <Pill tone="ink" className="py-0 text-[10px] uppercase tracking-wider">
-                      Mejor precio por corte
-                    </Pill>
-                  )}
+              {/* Narrow phones: price drops under the name so neither column gets squeezed. */}
+              <div className="flex min-w-0 flex-1 flex-col gap-2.5 min-[400px]:flex-row min-[400px]:items-start min-[400px]:gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <p className="break-words font-semibold text-ink">{p.name}</p>
+                    {i === 0 && plans.length > 1 && (
+                      <Pill tone="ink" className="py-0 text-[10px] uppercase tracking-wider">
+                        Mejor precio por corte
+                      </Pill>
+                    )}
+                  </div>
+                  <p className="text-sm text-dim">
+                    {p.cuts} {p.cuts === 1 ? "corte" : "cortes"} por mes
+                  </p>
+                  {p.description && <p className="mt-1.5 break-words text-xs text-faint">{p.description}</p>}
                 </div>
-                <p className="text-sm text-dim">
-                  {p.cuts} {p.cuts === 1 ? "corte" : "cortes"} por mes
-                </p>
-                {p.description && <p className="mt-1.5 text-xs text-faint">{p.description}</p>}
-              </div>
-              <div className="shrink-0 text-right">
-                <p className="font-serif text-2xl font-semibold leading-none tabular-nums">{formatPrice(p.price, currency)}</p>
-                <p className="mt-1 text-xs text-dim">{formatPrice(p.pricePerCut, currency)} c/u</p>
+                <div className="flex items-baseline gap-2 min-[400px]:block min-[400px]:shrink-0 min-[400px]:text-right">
+                  <p className="whitespace-nowrap font-serif text-2xl font-semibold leading-none tabular-nums">
+                    {formatPrice(p.price, currency)}
+                  </p>
+                  <p className="whitespace-nowrap text-xs text-dim min-[400px]:mt-1">
+                    {formatPrice(p.pricePerCut, currency)} c/u
+                  </p>
+                </div>
               </div>
             </button>
           );

@@ -55,7 +55,7 @@ export function RedemptionCodes({
                 <p className="truncate text-sm font-medium text-dim">{r.rewardName}</p>
                 <p className="font-mono text-xs tracking-[0.3em] text-faint line-through">{r.code}</p>
               </div>
-              <Pill tone="ok" className="shrink-0">
+              <Pill tone="neutral" className="shrink-0">
                 Entregado
               </Pill>
             </div>
@@ -66,23 +66,22 @@ export function RedemptionCodes({
             key={r.code + r.cycle}
             ref={isNew ? ref : undefined}
             className={cn(
-              "relative overflow-hidden rounded-[22px] border bg-card-2 p-5 text-center",
+              "relative scroll-my-6 overflow-hidden rounded-[22px] border bg-card-2 p-4 text-center min-[360px]:p-5",
               isNew ? "border-ink animate-reveal" : "border-line-strong",
             )}
           >
-            <div className="flex items-center justify-center gap-2 text-sm text-dim">
-              <Gift className="h-4 w-4" aria-hidden="true" />
-              <span className="font-medium text-ink">{r.rewardName}</span>
-              <Pill tone="warn" className="py-0 text-[10px]">
-                Para retirar
+            <div className="flex flex-col items-center gap-2 text-sm text-dim">
+              <Pill tone="ink" className="gap-1 py-0 text-[10px]">
+                <Gift className="h-3 w-3" aria-hidden="true" /> Para retirar
               </Pill>
+              <p className="max-w-full text-balance break-words font-medium text-ink">{r.rewardName}</p>
             </div>
             <p
-              className="my-4 font-mono text-4xl font-bold tracking-[0.3em] text-ink sm:text-5xl"
+              className="my-4 break-all pl-[0.3em] font-mono text-[clamp(1.9rem,10vw,2.25rem)] font-bold tracking-[0.3em] text-ink sm:text-5xl"
               aria-label={`Código ${r.code.split("").join(" ")}`}
             >
               {isNew ? (
-                <span className="stagger inline-flex" aria-hidden="true">
+                <span className="stagger inline-flex flex-wrap justify-center" aria-hidden="true">
                   {r.code.split("").map((ch, i) => (
                     <span key={i} style={{ "--i": i + 2 } as React.CSSProperties}>
                       {ch}

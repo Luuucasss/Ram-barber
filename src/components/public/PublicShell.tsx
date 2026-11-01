@@ -38,30 +38,36 @@ export function PublicShell({
       <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center" aria-hidden="true">
         <HaloRays size={900} className="-mt-[480px] animate-spin-slow opacity-[0.13]" />
       </div>
-      <div className={cn("relative mx-auto flex min-h-dvh w-full flex-col px-4 pb-10 pt-6", wide ? "max-w-3xl" : "max-w-lg", className)}>
+      <div
+        className={cn(
+          "relative mx-auto flex min-h-dvh w-full flex-col px-4 pt-6 pb-[max(2.5rem,calc(env(safe-area-inset-bottom)+1rem))]",
+          wide ? "max-w-3xl" : "max-w-lg",
+          className,
+        )}
+      >
         {(backHref || label) && (
           <div className="mb-6 flex items-center gap-3">
             {backHref && (
               <Link
                 href={backHref}
                 aria-label="Volver"
-                className="grid h-10 w-10 place-items-center rounded-full border border-line bg-card text-ink transition-colors hover:border-ink"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-line bg-card text-ink transition-colors hover:border-ink"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             )}
-            {label && <span className="text-[11px] font-semibold uppercase tracking-[0.3em] text-dim">{label}</span>}
+            {label && <span className="min-w-0 truncate text-[11px] font-semibold uppercase tracking-[0.3em] text-dim">{label}</span>}
           </div>
         )}
         <main className="flex-1">{children}</main>
-        <footer className="mt-12 flex flex-col items-center gap-4 text-center">
+        <footer className="mt-12 flex flex-col items-center gap-2 text-center">
           <OrnamentDivider />
           {whatsapp && (
             <a
               href={whatsappLink(whatsapp, whatsappText)}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm font-medium text-dim transition-colors hover:text-ink"
+              className="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-medium text-dim transition-colors hover:text-ink"
             >
               <WhatsAppIcon className="h-4 w-4" /> Escribinos por WhatsApp
             </a>

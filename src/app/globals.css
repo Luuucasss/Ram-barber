@@ -64,6 +64,19 @@
   html {
     color-scheme: dark;
     -webkit-tap-highlight-color: transparent;
+    /* Stop iOS from inflating text on rotation. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  /* No double-tap-to-zoom delay on controls. */
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  label,
+  [role="button"] {
+    touch-action: manipulation;
   }
   body {
     background: var(--color-bg);
@@ -112,6 +125,13 @@
     animation: var(--animate-shimmer);
   }
 
+  .select-chevron {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.85rem center;
+    background-size: 1rem;
+  }
+
   /* Logo is black-on-white: invert to white-on-black and let `screen` drop the black backdrop. */
   .logo-invert {
     filter: invert(1) contrast(1.15);
@@ -147,6 +167,14 @@
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* Safe-area helpers for sticky/fixed bottom bars (needs viewport-fit=cover to be non-zero). */
+@utility pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+@utility bottom-safe {
+  bottom: env(safe-area-inset-bottom);
 }
 
 @media (prefers-reduced-motion: reduce) {

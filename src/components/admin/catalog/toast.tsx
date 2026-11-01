@@ -61,7 +61,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-[70] flex flex-col items-center gap-2 px-4"
+        // Phones: above the admin tab bar and the floating "Nuevo …" button; tablets: above the tab bar;
+        // desktop (no tab bar): near the bottom edge, clear of the home indicator.
+        className="pointer-events-none fixed inset-x-0 bottom-[calc(var(--admin-tabbar-h,0px)+5.25rem)] z-[70] flex flex-col items-center gap-2 px-4 md:bottom-[calc(var(--admin-tabbar-h,0px)+1rem)] lg:bottom-[max(1rem,env(safe-area-inset-bottom))]"
       >
         {toasts.map((t) => (
           <div
@@ -71,15 +73,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               "pointer-events-auto flex max-w-md items-start gap-2.5 rounded-2xl border bg-card-2/95 px-4 py-3 text-sm text-ink shadow-[0_20px_50px_-20px_rgba(0,0,0,0.9)] backdrop-blur",
               "transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] starting:translate-y-3 starting:opacity-0",
               t.tone === "ok" && "border-line-strong",
-              t.tone === "bad" && "border-bad/50",
-              t.tone === "warn" && "border-warn/50",
+              t.tone === "bad" && "border-ink/70",
+              t.tone === "warn" && "border-ink/40",
               t.leaving && "translate-y-2 opacity-0 duration-150",
             )}
           >
-            {t.tone === "ok" && <Check className="mt-0.5 h-4 w-4 shrink-0 text-ok" aria-hidden="true" />}
-            {t.tone === "bad" && <X className="mt-0.5 h-4 w-4 shrink-0 text-bad" aria-hidden="true" />}
-            {t.tone === "warn" && <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warn" aria-hidden="true" />}
-            <span>{t.message}</span>
+            {t.tone === "ok" && <Check className="mt-0.5 h-4 w-4 shrink-0 text-ink" aria-hidden="true" />}
+            {t.tone === "bad" && <X className="mt-0.5 h-4 w-4 shrink-0 text-ink" aria-hidden="true" />}
+            {t.tone === "warn" && <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-ink" aria-hidden="true" />}
+            <span className="min-w-0 break-words">{t.message}</span>
           </div>
         ))}
       </div>

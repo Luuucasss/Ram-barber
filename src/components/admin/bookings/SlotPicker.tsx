@@ -55,7 +55,7 @@ export function SlotPicker({
   }, [slots, value, onChange]);
 
   if (!ready) return <p className="text-sm text-faint">Elegí servicio, barbero y fecha para ver horarios.</p>;
-  if (error) return <p className="text-sm text-bad">{error}</p>;
+  if (error) return <p className="rounded-xl border border-ink/50 bg-card-2 px-3 py-2 text-sm text-ink" role="alert">{error}</p>;
   if (!slots)
     return (
       <p className="flex items-center gap-2 text-sm text-dim" role="status">
@@ -65,7 +65,7 @@ export function SlotPicker({
   if (!slots.length) return <p className="text-sm text-dim">No hay horarios libres ese día.</p>;
 
   return (
-    <div role="radiogroup" aria-label="Horario" className="grid grid-cols-4 gap-1.5 sm:grid-cols-5">
+    <div role="radiogroup" aria-label="Horario" className="grid grid-cols-4 gap-2 sm:grid-cols-5 sm:gap-1.5">
       {slots.map((s) => {
         const active = s.time === value;
         const off = s.time === disabledTime;
@@ -78,7 +78,7 @@ export function SlotPicker({
             disabled={off}
             onClick={() => onChange(s.time, s)}
             className={cn(
-              "h-10 rounded-xl border text-sm font-medium tabular-nums transition-[background-color,border-color,color,transform] duration-150 ease-out active:scale-[0.97]",
+              "h-11 rounded-xl border text-[15px] font-medium tabular-nums sm:h-10 sm:text-sm transition-[background-color,border-color,color,transform] duration-150 ease-out active:scale-[0.97]",
               active
                 ? "border-ink bg-ink text-bg"
                 : "border-line bg-surface text-ink hover:border-line-strong hover:bg-card-2",

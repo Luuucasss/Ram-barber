@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef, useEffect, useId, useRef } from "react";
-import { Loader2, X } from "lucide-react";
+import { AlertCircle, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ButtonVariant = "primary" | "outline" | "ghost" | "danger" | "subtle";
@@ -12,14 +12,17 @@ const variants: Record<ButtonVariant, string> = {
     "bg-ink text-bg hover:bg-white shadow-[0_0_0_1px_var(--color-ink),0_10px_30px_-10px_rgba(255,255,255,0.35)] hover:shadow-[0_0_0_1px_#fff,0_14px_40px_-10px_rgba(255,255,255,0.5)]",
   outline: "border border-line-strong text-ink hover:border-ink hover:bg-white/5",
   ghost: "text-dim hover:text-ink hover:bg-white/5",
-  danger: "border border-bad/50 text-bad hover:bg-bad/10 hover:border-bad",
+  // Monochrome identity: destructive actions read through the dashed border, not red.
+  danger: "border border-dashed border-ink/50 text-ink hover:bg-white/5 hover:border-solid hover:border-ink",
   subtle: "bg-card-2 text-ink hover:bg-line border border-line",
 };
+// `max-sm:min-*` keeps every button a >=44px tap target on phones without touching desktop sizing
+// (min-height wins over any `h-*` a caller passes, and only below the `sm` breakpoint).
 const sizes: Record<ButtonSize, string> = {
-  sm: "h-9 px-3 text-sm rounded-xl gap-1.5",
+  sm: "h-9 px-3 text-sm rounded-xl gap-1.5 max-sm:min-h-11 pointer-coarse:min-h-11",
   md: "h-11 px-5 text-sm rounded-2xl gap-2",
   lg: "h-14 px-6 text-base rounded-2xl gap-2",
-  icon: "h-10 w-10 rounded-xl",
+  icon: "h-10 w-10 rounded-xl max-sm:min-h-11 max-sm:min-w-11 pointer-coarse:min-h-11 pointer-coarse:min-w-11",
 };
 
 export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -56,8 +59,9 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
   return <div className={cn("rounded-[var(--radius-card)] border border-line bg-card", className)} {...props} />;
 }
 
+// text-base (16px) on purpose: anything smaller makes iOS Safari zoom the page on focus.
 const fieldBase =
-  "w-full rounded-2xl border border-line bg-surface px-4 text-ink placeholder:text-faint transition-colors focus:border-ink focus:outline-none disabled:opacity-50 aria-[invalid=true]:border-bad";
+  "w-full rounded-2xl border border-line bg-surface px-4 text-base text-ink placeholder:text-faint transition-colors focus:border-ink focus:outline-none disabled:opacity-50 aria-[invalid=true]:border-ink aria-[invalid=true]:shadow-[0_0_0_1px_var(--color-ink)]";
 
 export const Input = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function Input(
   { className, ...props },
@@ -76,8 +80,9 @@ export const Select = forwardRef<HTMLSelectElement, React.SelectHTMLAttributes<H
   { className, children, ...props },
   ref,
 ) {
+  // Chevron is a CSS background (.select-chevron) so callers' layout classes still hit the <select> itself.
   return (
-    <select ref={ref} className={cn(fieldBase, "h-12 appearance-none pr-10", className)} {...props}>
+    <select ref={ref} className={cn(fieldBase, "select-chevron h-12 appearance-none pr-10", className)} {...props}>
       {children}
     </select>
   );
@@ -107,8 +112,10 @@ export function Field({
       )}
       {children(id)}
       {error ? (
-        <p className="text-xs text-bad" role="alert">
-          {error}
+        // Black & white identity: errors read through weight + icon, not red.
+        <p className="flex items-start gap-1.5 text-xs font-medium text-ink" role="alert">
+          <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span className="min-w-0">{error}</span>
         </p>
       ) : hint ? (
         <p className="text-xs text-faint">{hint}</p>
@@ -128,12 +135,14 @@ export function Toggle({
   label?: React.ReactNode;
   disabled?: boolean;
 }) {
+  const labelId = useId();
   return (
-    <label className={cn("inline-flex cursor-pointer items-center gap-3", disabled && "opacity-50")}>
+    <label className={cn("inline-flex cursor-pointer items-center gap-3 max-sm:min-h-11 pointer-coarse:min-h-11", disabled && "opacity-50")}>
       <button
         type="button"
         role="switch"
         aria-checked={checked}
+        aria-labelledby={label ? labelId : undefined}
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cn(
@@ -148,7 +157,11 @@ export function Toggle({
           )}
         />
       </button>
-      {label && <span className="text-sm text-ink">{label}</span>}
+      {label && (
+        <span id={labelId} className="text-sm text-ink">
+          {label}
+        </span>
+      )}
     </label>
   );
 }
@@ -165,9 +178,10 @@ export function Spinner({ className, label }: { className?: string; label?: stri
 type PillTone = "neutral" | "ok" | "bad" | "warn" | "ink";
 const pillTones: Record<PillTone, string> = {
   neutral: "border-line-strong text-dim",
-  ok: "border-ok/40 text-ok bg-ok/5",
-  bad: "border-bad/40 text-bad bg-bad/5",
-  warn: "border-warn/40 text-warn bg-warn/5",
+  // Black & white only: tones differ by border style and weight instead of hue.
+  ok: "border-ink/70 text-ink",
+  bad: "border-dashed border-line-strong text-faint",
+  warn: "border-dotted border-ink/60 text-ink",
   ink: "border-ink bg-ink text-bg",
 };
 
@@ -187,8 +201,12 @@ export function Pill({ tone = "neutral", className, ...props }: React.HTMLAttrib
 export function ErrorText({ children, className }: { children?: React.ReactNode; className?: string }) {
   if (!children) return null;
   return (
-    <p role="alert" className={cn("rounded-xl border border-bad/30 bg-bad/5 px-3 py-2 text-sm text-bad", className)}>
-      {children}
+    <p
+      role="alert"
+      className={cn("flex items-start gap-2 rounded-xl border border-ink/50 bg-card-2 px-3 py-2 text-sm text-ink", className)}
+    >
+      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+      <span className="min-w-0 flex-1">{children}</span>
     </p>
   );
 }
@@ -231,17 +249,24 @@ export function Modal({
       onClick={(e) => e.target === ref.current && onClose()}
       className={cn(
         "m-auto w-[calc(100%-2rem)] max-w-lg rounded-[var(--radius-card)] border border-line-strong bg-card p-0 text-ink backdrop:bg-black/75 backdrop:backdrop-blur-sm open:animate-reveal",
+        // Phones: bottom sheet anchored to the thumb zone, full width, clear of the home indicator.
+        "max-sm:mb-0 max-sm:w-full max-sm:max-w-none max-sm:rounded-b-none max-sm:border-x-0 max-sm:border-b-0",
         className,
       )}
     >
       <div className="flex max-h-[85dvh] flex-col">
-        <div className="flex items-center justify-between gap-4 border-b border-line px-5 py-4">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          <button onClick={onClose} className="rounded-lg p-1 text-dim hover:text-ink" aria-label="Cerrar">
+        <div className="flex items-center justify-between gap-4 border-b border-line py-2 pl-5 pr-2 sm:py-3">
+          <h2 className="min-w-0 text-lg font-semibold">{title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-dim hover:bg-white/5 hover:text-ink"
+            aria-label="Cerrar"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="overflow-y-auto px-5 py-5">{children}</div>
+        <div className="overflow-y-auto overscroll-contain px-5 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">{children}</div>
       </div>
     </dialog>
   );

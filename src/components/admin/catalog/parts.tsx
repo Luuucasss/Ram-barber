@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import { AlertTriangle, ImageOff, Loader2 } from "lucide-react";
-import { Button, Modal, Toggle } from "@/components/ui";
+import { Button, ErrorText, Modal, Toggle } from "@/components/ui";
 import { ApiClientError } from "@/lib/client-api";
 import { cn } from "@/lib/utils";
 import { useToast } from "./toast";
@@ -74,6 +74,21 @@ export function fieldErrors(e: unknown): Record<string, string> {
   if (!(e instanceof ApiClientError) || !e.issues || typeof e.issues !== "object") return {};
   const fe = (e.issues as { fieldErrors?: Record<string, string[] | undefined> }).fieldErrors ?? {};
   return Object.fromEntries(Object.entries(fe).map(([k, v]) => [k, v?.[0] ?? "Valor inválido"]));
+}
+
+/**
+ * After a failed submit, bring the first invalid field (or error message) into view and focus it.
+ * Long sheets on phones otherwise leave the error far above the thumb, so the submit "does nothing".
+ */
+export function revealFirstError(root: HTMLElement | null) {
+  if (!root) return;
+  // Wait for React to commit the error messages / aria-invalid flags (state updates flush in a microtask).
+  setTimeout(() => {
+    const el = root.querySelector<HTMLElement>('[aria-invalid="true"], [role="alert"]');
+    if (!el) return;
+    if (el.matches("input, textarea, select, button")) el.focus({ preventScroll: true });
+    el.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+  }, 0);
 }
 
 export function isHttpUrl(v: string) {
@@ -162,6 +177,20 @@ export function ImagePreview({ url, className, label = "Vista previa" }: { url: 
 
 /* ───────────────────────── modal & forms ───────────────────────── */
 
+/**
+ * Phone layout for the shared <dialog>: a full-width bottom sheet (thumb reach, more room for long
+ * forms), taller cap, and a 44px close button. Desktop (sm+) keeps the centered card.
+ * Short viewports (a phone in landscape) get a bottom-anchored sheet that may use the full height
+ * and a slimmer header, so the scroll area between the header and the sticky footer stays usable.
+ */
+const SHEET_ON_PHONE = cn(
+  "max-sm:mb-0 max-sm:w-full max-sm:max-w-none max-sm:rounded-b-none max-sm:border-x-0 max-sm:border-b-0",
+  "max-sm:[&>div]:max-h-[92dvh]",
+  "[@media(max-height:540px)]:mb-0 [@media(max-height:540px)]:max-h-dvh [@media(max-height:540px)]:rounded-b-none [@media(max-height:540px)]:border-b-0",
+  "[@media(max-height:540px)]:[&>div]:max-h-dvh [@media(max-height:540px)]:[&>div>div:first-child]:py-0.5",
+  "[&_[aria-label=Cerrar]]:-mr-2 [&_[aria-label=Cerrar]]:inline-flex [&_[aria-label=Cerrar]]:min-h-11 [&_[aria-label=Cerrar]]:min-w-11 [&_[aria-label=Cerrar]]:items-center [&_[aria-label=Cerrar]]:justify-center",
+);
+
 /** App Modal with a faster (260ms, strong ease-out) entrance. Children mount only while open. */
 export function CatalogModal({
   open,
@@ -181,7 +210,7 @@ export function CatalogModal({
       open={open}
       onClose={onClose}
       title={title}
-      className={cn("open:animate-[reveal_260ms_cubic-bezier(0.23,1,0.32,1)_both]", wide ? "max-w-2xl" : "max-w-lg")}
+      className={cn("open:animate-[reveal_260ms_cubic-bezier(0.23,1,0.32,1)_both]", wide ? "max-w-2xl" : "max-w-lg", SHEET_ON_PHONE)}
     >
       {open ? children : null}
     </Modal>
@@ -201,12 +230,12 @@ export function FormActions({
   extra?: React.ReactNode;
 }) {
   return (
-    <div className="sticky -bottom-5 z-10 -mx-5 -mb-5 mt-6 flex items-center justify-end gap-2 border-t border-line bg-card/95 px-5 py-4 backdrop-blur">
+    <div className="sticky -bottom-5 z-10 -mx-5 -mb-5 mt-6 flex flex-wrap items-center justify-end gap-2 border-t border-line bg-card/95 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 backdrop-blur sm:pb-4 [@media(max-height:540px)]:pb-[max(0.5rem,env(safe-area-inset-bottom))] [@media(max-height:540px)]:pt-2">
       {extra && <div className="mr-auto">{extra}</div>}
-      <Button type="button" variant="ghost" onClick={onCancel} disabled={saving}>
+      <Button type="button" variant="ghost" onClick={onCancel} disabled={saving} className="max-sm:flex-1">
         Cancelar
       </Button>
-      <Button type="submit" loading={saving}>
+      <Button type="submit" loading={saving} className="max-sm:flex-[2]">
         {submitLabel}
       </Button>
     </div>
@@ -244,17 +273,17 @@ export function ConfirmDialog({
   }
   return (
     <CatalogModal open={open} onClose={() => !busy && onClose()} title={title}>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 max-sm:pb-[env(safe-area-inset-bottom)]">
         <div className="flex gap-3 text-sm text-dim">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-warn" aria-hidden="true" />
-          <div className="flex flex-col gap-2">{children}</div>
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-ink" aria-hidden="true" />
+          <div className="flex min-w-0 flex-col gap-2 break-words">{children}</div>
         </div>
-        {error && <p className="rounded-xl border border-bad/30 bg-bad/5 px-3 py-2 text-sm text-bad">{error}</p>}
+        <ErrorText>{error}</ErrorText>
         <div className="flex justify-end gap-2">
-          <Button variant="ghost" onClick={onClose} disabled={busy}>
+          <Button variant="ghost" onClick={onClose} disabled={busy} className="max-sm:flex-1">
             Cancelar
           </Button>
-          <Button variant="danger" onClick={run} loading={busy}>
+          <Button variant="primary" onClick={run} loading={busy} className="max-sm:flex-1">
             {confirmLabel}
           </Button>
         </div>
@@ -280,7 +309,7 @@ export function ChipMultiSelect({
   if (!options.length) return <p className="text-sm text-faint">{emptyText}</p>;
   const chip = (active: boolean) =>
     cn(
-      "inline-flex h-9 select-none items-center gap-1.5 rounded-full border px-3.5 text-sm transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.97]",
+      "inline-flex h-11 max-w-full select-none items-center gap-1.5 rounded-full border px-4 text-sm sm:pointer-fine:h-9 sm:pointer-fine:px-3.5 transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.97]",
       active ? "border-ink bg-ink font-medium text-bg" : "border-line-strong text-dim hover:border-ink hover:text-ink",
     );
   return (
@@ -319,7 +348,12 @@ export function ActiveSwitch({
 }) {
   const toast = useToast();
   return (
-    <span className="inline-flex items-center [&>label]:gap-0" title={checked ? "Activo" : "Inactivo"}>
+    // The label wraps the switch, so padding it out gives a 44px tap target without changing the look.
+    // Only the vertical slack is pulled back (the switch is already 44px wide), so it never hugs the card edge.
+    <span
+      className="-my-2.5 inline-flex shrink-0 items-center [&>label]:min-h-11 [&>label]:min-w-11 [&>label]:justify-center [&>label]:gap-0 sm:pointer-fine:my-0 sm:pointer-fine:[&>label]:min-h-0 sm:pointer-fine:[&>label]:min-w-0"
+      title={checked ? "Activo" : "Inactivo"}
+    >
       <Toggle
         checked={checked}
         label={<span className="sr-only">{label}</span>}
@@ -328,6 +362,15 @@ export function ActiveSwitch({
         }}
       />
     </span>
+  );
+}
+
+/** Labeled switch for forms: same look as Toggle, but the whole row is a 44px-tall tap target. */
+export function FormToggle(props: React.ComponentProps<typeof Toggle>) {
+  return (
+    <div className="flex [&>label]:min-h-11">
+      <Toggle {...props} />
+    </div>
   );
 }
 
@@ -345,7 +388,7 @@ export function SectionHeading({ title, description, actions }: { title: string;
 
 export function CharCount({ value, max }: { value: string; max: number }) {
   return (
-    <span className={cn("tabular-nums", value.length > max ? "text-bad" : "text-faint")}>
+    <span className={cn("tabular-nums", value.length > max ? "font-semibold text-ink" : "text-faint")}>
       {value.length}/{max}
     </span>
   );

@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, RefreshCw } from "lucide-react";
-import { AdminPageHeader } from "@/components/admin/AdminShell";
+import { AdminFab, AdminPageHeader } from "@/components/admin/AdminShell";
 import { BookingDrawer } from "@/components/admin/bookings/BookingDrawer";
 import { NewBookingSheet, type NewBookingPreset } from "@/components/admin/bookings/NewBookingSheet";
 import { useAutoRefresh, useShortcuts } from "@/components/admin/bookings/hooks";
 import type { AdminBooking, AgendaData } from "@/components/admin/bookings/types";
 import { useCatalog } from "@/components/admin/bookings/useCatalog";
-import { Button, EmptyState, ErrorText, Input, Select, Toggle } from "@/components/ui";
+import { Button, EmptyState, ErrorText, Input, Select } from "@/components/ui";
 import { Rose } from "@/components/ornaments";
 import { api } from "@/lib/client-api";
 import { formatDateLong } from "@/lib/format";
@@ -177,95 +177,120 @@ export function AgendaView() {
   const headerDate = date ? (isToday ? `Hoy · ${formatDateLong(date)}` : formatDateLong(date)) : "Cargando…";
 
   return (
-    <div className="flex flex-col gap-5">
+    // Phones: extra bottom room so the floating "Nuevo turno" never hides the last booking.
+    <div className="flex flex-col gap-5 pb-20 md:pb-0">
       <AdminPageHeader
         title="Agenda"
         description={headerDate}
         actions={
-          <Button onClick={() => openNew({ date })} size="sm" title="Nuevo turno (N)">
+          // Phones too: the floating button only takes over once this one scrolls away.
+          <Button id="agenda-new-inline" onClick={() => openNew({ date })} size="sm" className="h-11 md:h-9" title="Nuevo turno (N)">
             <Plus className="h-4 w-4" aria-hidden="true" /> Nuevo turno
           </Button>
         }
       />
 
       {/* Toolbar */}
-      <div className="-mt-2 flex flex-wrap items-center gap-2">
-        <div className="flex items-center rounded-xl border border-line bg-surface p-0.5">
-          <button
-            type="button"
-            onClick={() => shift(-1)}
-            className="rounded-lg p-2 text-dim transition-colors hover:bg-white/5 hover:text-ink"
-            aria-label="Día anterior (←)"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => goTo("")}
-            disabled={isToday}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors hover:bg-white/5 disabled:text-faint disabled:hover:bg-transparent"
-            title="Ir a hoy (T)"
-          >
-            Hoy
-          </button>
-          <button
-            type="button"
-            onClick={() => shift(1)}
-            className="rounded-lg p-2 text-dim transition-colors hover:bg-white/5 hover:text-ink"
-            aria-label="Día siguiente (→)"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+      <div className="-mt-2 flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:gap-2">
+        <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center rounded-xl border border-line bg-surface p-0.5">
+            <button
+              type="button"
+              onClick={() => shift(-1)}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-dim transition-colors hover:bg-white/5 hover:text-ink active:bg-white/10 md:h-9 md:w-9"
+              aria-label="Día anterior (←)"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => goTo("")}
+              disabled={isToday}
+              className="h-11 rounded-lg px-3 text-sm font-medium transition-colors hover:bg-white/5 active:bg-white/10 disabled:text-faint disabled:hover:bg-transparent md:h-9"
+              title="Ir a hoy (T)"
+            >
+              Hoy
+            </button>
+            <button
+              type="button"
+              onClick={() => shift(1)}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-dim transition-colors hover:bg-white/5 hover:text-ink active:bg-white/10 md:h-9 md:w-9"
+              aria-label="Día siguiente (→)"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+          <label className="relative min-w-0 flex-1 md:flex-none">
+            <span className="sr-only">Elegir fecha</span>
+            <CalendarDays
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-dim"
+              aria-hidden="true"
+            />
+            <Input
+              type="date"
+              value={date}
+              onChange={(e) => e.target.value && goTo(e.target.value)}
+              className="h-12 w-full min-w-0 rounded-xl pl-9 pr-3 text-base md:h-10 md:w-auto md:text-sm"
+            />
+          </label>
         </div>
-        <label className="relative">
-          <span className="sr-only">Elegir fecha</span>
-          <CalendarDays
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-dim"
-            aria-hidden="true"
-          />
-          <Input
-            type="date"
-            value={date}
-            onChange={(e) => e.target.value && goTo(e.target.value)}
-            className="h-10 w-auto rounded-xl pl-9 pr-3 text-sm"
-          />
-        </label>
 
-        {branches.length > 1 && (
-          <Select
-            value={branch}
-            onChange={(e) => setBranch(e.target.value)}
-            className="h-10 w-auto rounded-xl pr-8 text-sm"
-            aria-label="Sucursal"
-          >
-            <option value="">Todas las sucursales</option>
-            {branches.map((b) => (
-              <option key={b._id} value={b._id}>
-                {b.name}
-              </option>
-            ))}
-          </Select>
-        )}
+        {/* Phone: swipeable day strip around the selected date */}
+        {date && today && <DayStrip date={date} today={today} onPick={goTo} />}
 
-        <div className="ml-auto flex items-center gap-3">
-          <Toggle
-            checked={showCancelled}
-            onChange={setShowCancelled}
-            label={
-              <span className="text-sm text-dim">
+        <div className="flex items-center gap-2 md:contents">
+          {branches.length > 1 && (
+            <Select
+              value={branch}
+              onChange={(e) => setBranch(e.target.value)}
+              className="h-11 min-w-0 flex-1 rounded-xl pr-8 text-base md:h-10 md:w-auto md:flex-none md:text-sm"
+              aria-label="Sucursal"
+            >
+              <option value="">Todas las sucursales</option>
+              {branches.map((b) => (
+                <option key={b._id} value={b._id}>
+                  {b.name}
+                </option>
+              ))}
+            </Select>
+          )}
+
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={showCancelled}
+              onClick={() => setShowCancelled(!showCancelled)}
+              className="inline-flex h-11 items-center gap-2.5 rounded-xl px-2 text-sm text-dim transition-colors hover:text-ink md:h-10"
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "relative h-6 w-11 shrink-0 rounded-full border transition-colors duration-200",
+                  showCancelled ? "border-ink bg-ink" : "border-line-strong bg-card-2",
+                )}
+              >
+                <span
+                  className={cn(
+                    "absolute top-0.5 h-4.5 w-4.5 rounded-full transition-[left,background-color] duration-200 ease-out",
+                    showCancelled ? "left-[22px] bg-bg" : "left-0.5 bg-dim",
+                  )}
+                />
+              </span>
+              <span>
                 Cancelados{cancelledCount ? <span className="tabular-nums"> ({cancelledCount})</span> : null}
               </span>
-            }
-          />
-          <button
-            type="button"
-            onClick={() => load()}
-            className="rounded-lg p-2 text-dim transition-colors hover:bg-white/5 hover:text-ink"
-            aria-label="Actualizar"
-            title="Se actualiza sola cada minuto"
-          >
-            <RefreshCw className={cn("h-4 w-4", loading && data && "animate-spin")} />
-          </button>
+            </button>
+            <button
+              type="button"
+              onClick={() => load()}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-dim transition-colors hover:bg-white/5 hover:text-ink active:bg-white/10 md:h-10 md:w-10"
+              aria-label="Actualizar"
+              title="Se actualiza sola cada minuto"
+            >
+              <RefreshCw className={cn("h-4 w-4", loading && data && "animate-spin")} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -314,7 +339,7 @@ export function AgendaView() {
                       aria-selected={mode === m}
                       onClick={() => setMode(m)}
                       className={cn(
-                        "rounded-lg py-2 font-medium transition-colors duration-150",
+                        "h-11 rounded-lg font-medium transition-colors duration-150",
                         mode === m ? "bg-ink text-bg" : "text-dim",
                       )}
                     >
@@ -341,6 +366,15 @@ export function AgendaView() {
           )}
         </div>
       )}
+
+      <AdminFab
+        onClick={() => openNew({ date })}
+        icon={<Plus className="h-5 w-5" aria-hidden="true" />}
+        title="Nuevo turno"
+        revealAfterId="agenda-new-inline"
+      >
+        Nuevo turno
+      </AdminFab>
 
       <BookingDrawer
         booking={(selected && data?.bookings.find((b) => b._id === selected._id)) || selected}
@@ -399,6 +433,63 @@ function Legend() {
         <kbd className="font-sans text-dim">T</kbd> hoy · <kbd className="font-sans text-dim">N</kbd> nuevo · clic en un
         hueco para reservar
       </span>
+    </div>
+  );
+}
+
+const WEEKDAY_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+/** Phone-only horizontal strip of day chips (a contained scroller) centred on the selected date. */
+function DayStrip({ date, today, onPick }: { date: string; today: string; onPick: (d: string) => void }) {
+  const scroller = useRef<HTMLDivElement>(null);
+  const first = useRef(true);
+  const days = useMemo(() => Array.from({ length: 22 }, (_, i) => addDays(date, i - 7)), [date]);
+
+  useEffect(() => {
+    const el = scroller.current;
+    const chip = el?.querySelector<HTMLElement>("[aria-current='date']");
+    if (!el || !chip) return;
+    const left = chip.offsetLeft - (el.clientWidth - chip.offsetWidth) / 2;
+    el.scrollTo({ left, behavior: first.current ? "auto" : "smooth" });
+    first.current = false;
+  }, [date]);
+
+  return (
+    <div
+      ref={scroller}
+      className="relative -mx-4 flex snap-x gap-1.5 overflow-x-auto overscroll-x-contain px-4 pb-1 [scrollbar-width:none] sm:-mx-6 sm:px-6 md:hidden [&::-webkit-scrollbar]:hidden"
+      aria-label="Elegir día"
+    >
+      {days.map((d) => {
+        const active = d === date;
+        const isToday = d === today;
+        const wd = new Date(`${d}T00:00:00Z`).getUTCDay();
+        return (
+          <button
+            key={d}
+            type="button"
+            onClick={() => onPick(d)}
+            aria-current={active ? "date" : undefined}
+            aria-label={isToday ? `Hoy, ${formatDateLong(d)}` : formatDateLong(d)}
+            className={cn(
+              "relative flex h-14 w-12 shrink-0 snap-center flex-col items-center justify-center rounded-xl border text-center tabular-nums transition-[background-color,border-color,color,transform] duration-150 ease-out active:scale-[0.95]",
+              active ? "border-ink bg-ink text-bg" : "border-line bg-surface text-ink",
+              !active && wd === 0 && "text-faint",
+            )}
+          >
+            <span className={cn("text-[10px] uppercase tracking-wider", active ? "text-bg/70" : "text-faint")}>
+              {WEEKDAY_SHORT[wd]}
+            </span>
+            <span className="text-base font-semibold leading-tight">{Number(d.slice(8))}</span>
+            {isToday && (
+              <span
+                aria-hidden="true"
+                className={cn("absolute bottom-1 h-1 w-1 rounded-full", active ? "bg-bg" : "bg-ink")}
+              />
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }

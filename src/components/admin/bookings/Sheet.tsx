@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +19,10 @@ export function Sheet({
   children,
   footer,
   className,
+  resetKey,
 }: {
+  /** When this changes while open (e.g. a different booking), the body scrolls back to the top. */
+  resetKey?: unknown;
   open: boolean;
   onClose: () => void;
   title?: React.ReactNode;
@@ -35,6 +38,12 @@ export function Sheet({
   if (open) last.current = { title, subtitle, children, footer };
   const view = open ? { title, subtitle, children, footer } : last.current;
 
+  const body = useRef<HTMLDivElement>(null);
+  // Every opening (and every content switch) starts at the top: header info + quick actions first.
+  useLayoutEffect(() => {
+    if (open && body.current) body.current.scrollTop = 0;
+  }, [open, resetKey]);
+
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
@@ -42,6 +51,7 @@ export function Sheet({
       if (!d.open) {
         d.showModal();
         void d.offsetHeight; // commit the closed transform before flipping to open
+        if (body.current) body.current.scrollTop = 0; // now laid out, so the reset sticks
       }
       setShown(true);
       const prev = document.documentElement.style.overflow;
@@ -126,7 +136,7 @@ export function Sheet({
           <header className="flex items-start justify-between gap-3 border-b border-line px-5 pb-4 pt-3 sm:pt-5">
             <div className="min-w-0">
               {view.title && (
-                <h2 id={titleId} className="truncate text-lg font-semibold leading-tight">
+                <h2 id={titleId} className="line-clamp-2 break-words text-lg font-semibold leading-tight sm:line-clamp-1">
                   {view.title}
                 </h2>
               )}
@@ -135,14 +145,22 @@ export function Sheet({
             <button
               type="button"
               onClick={onClose}
-              className="-mr-1 rounded-lg p-1.5 text-dim transition-colors hover:bg-white/5 hover:text-ink"
+              className="-mr-2.5 -mt-1.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-dim transition-colors hover:bg-white/5 hover:text-ink active:bg-white/10 sm:-mt-1 sm:h-9 sm:w-9"
               aria-label="Cerrar"
             >
               <X className="h-5 w-5" />
             </button>
           </header>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5">{view.children}</div>
+        <div
+          ref={body}
+          className={cn(
+            "min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5",
+            !view.footer && "pb-[max(1.25rem,env(safe-area-inset-bottom))]",
+          )}
+        >
+          {view.children}
+        </div>
         {view.footer && (
           <footer className="border-t border-line bg-card px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             {view.footer}

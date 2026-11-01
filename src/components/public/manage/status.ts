@@ -15,11 +15,15 @@ export function bookingState(status: BookingStatus, opts: { minutesUntil?: numbe
   return "upcoming";
 }
 
-export const STATE_PILL: Record<BookingState, { label: string; tone: PillTone }> = {
-  upcoming: { label: "Confirmado", tone: "ok" },
-  soon: { label: "Confirmado", tone: "ok" },
-  past: { label: "Pasado", tone: "neutral" },
-  cancelled: { label: "Cancelado", tone: "bad" },
-  completed: { label: "Completado", tone: "ink" },
-  no_show: { label: "No viniste", tone: "warn" },
+/**
+ * Black & white only: every state is told apart by fill/border weight, never by hue.
+ * `className` is merged over the Pill tone (tailwind-merge), so it wins over any colour.
+ */
+export const STATE_PILL: Record<BookingState, { label: string; tone: PillTone; className: string }> = {
+  upcoming: { label: "Confirmado", tone: "neutral", className: "border-ink bg-white/5 text-ink" },
+  soon: { label: "Confirmado", tone: "neutral", className: "border-ink bg-white/5 text-ink" },
+  past: { label: "Pasado", tone: "neutral", className: "text-dim" },
+  cancelled: { label: "Cancelado", tone: "neutral", className: "border-dashed text-dim" },
+  completed: { label: "Completado", tone: "ink", className: "" },
+  no_show: { label: "No viniste", tone: "neutral", className: "border-dashed text-faint" },
 };

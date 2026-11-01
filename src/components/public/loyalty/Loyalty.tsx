@@ -58,10 +58,13 @@ export function Loyalty({ whatsapp, preview }: { whatsapp: string; preview: Loya
     <PublicShell backHref="/" label="Fidelidad" whatsapp={data?.whatsapp ?? whatsapp}>
       <header className="stagger mb-8 flex flex-col items-center gap-3 text-center">
         <Logo className="h-16 w-auto" />
-        <h1 className="font-gothic text-6xl leading-[0.9] text-ink" style={{ "--i": 1 } as React.CSSProperties}>
+        <h1
+          className="text-balance font-gothic text-[clamp(2.6rem,14.5vw,3.75rem)] leading-[0.9] text-ink"
+          style={{ "--i": 1 } as React.CSSProperties}
+        >
           Fidelidad <span className="text-shimmer">RAM</span>
         </h1>
-        <p className="max-w-xs font-serif text-lg italic text-dim" style={{ "--i": 2 } as React.CSSProperties}>
+        <p className="max-w-xs text-balance font-serif text-lg italic text-dim" style={{ "--i": 2 } as React.CSSProperties}>
           {data
             ? data.firstName
               ? `Hola, ${data.firstName}.`
@@ -76,10 +79,10 @@ export function Loyalty({ whatsapp, preview }: { whatsapp: string; preview: Loya
         <Intro preview={preview} onSubmit={(p) => fetchCard(p)} loading={loading} error={error} />
       ) : (
         <div className="flex flex-col gap-6">
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card px-4 py-3 text-sm">
-            <span className="inline-flex items-center gap-2 text-dim">
-              <Smartphone className="h-4 w-4" aria-hidden="true" />
-              <span className="tabular-nums text-ink">{formatPhone(phone)}</span>
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card py-1 pl-4 pr-1 text-sm">
+            <span className="inline-flex min-w-0 items-center gap-2 text-dim">
+              <Smartphone className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="truncate tabular-nums text-ink">{formatPhone(phone)}</span>
             </span>
             <button
               type="button"
@@ -88,14 +91,24 @@ export function Loyalty({ whatsapp, preview }: { whatsapp: string; preview: Loya
                 setJustRedeemed(null);
                 setTab("card");
               }}
-              className="font-medium text-dim underline-offset-4 transition-colors hover:text-ink hover:underline"
+              className="inline-flex min-h-11 shrink-0 items-center rounded-xl px-3 font-medium text-dim underline-offset-4 transition-colors hover:text-ink hover:underline active:bg-white/5"
             >
               Cambiar
             </button>
           </div>
 
           {data.loyalty.member ? (
-            <MemberView data={data} justRedeemed={justRedeemed} />
+            <MemberView
+              data={data}
+              phone={phone}
+              justRedeemed={justRedeemed}
+              onRedeemed={(res) => {
+                const { redemption, ...rest } = res;
+                setData(rest);
+                setJustRedeemed(redemption.code);
+              }}
+              onStale={() => fetchCard(phone, { quiet: true })}
+            />
           ) : (
             <>
               {showTabs && <Tabs tab={tab} onChange={setTab} />}
@@ -166,10 +179,10 @@ function Intro({
                   style={{ "--i": i } as React.CSSProperties}
                   className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card px-4 py-3 text-sm"
                 >
-                  <span className="text-dim">
+                  <span className="shrink-0 text-dim">
                     Tu <span className="font-semibold text-ink">{s.position}° corte</span>
                   </span>
-                  <span className="font-semibold uppercase tracking-wider text-ink">{stepLabel(s)}</span>
+                  <span className="text-right font-semibold uppercase tracking-wider text-ink">{stepLabel(s)}</span>
                 </li>
               ))}
             </ul>
@@ -288,8 +301,8 @@ function Message({ loyalty }: { loyalty: LoyaltyView }) {
       <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full border border-line-strong text-ink">
         {msg.icon === "pause" ? <PauseCircle className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
       </span>
-      <div>
-        <p className="font-semibold text-ink">{msg.title}</p>
+      <div className="min-w-0">
+        <p className="text-balance font-semibold text-ink">{msg.title}</p>
         <p className="text-sm text-dim">{msg.body}</p>
       </div>
     </div>
@@ -350,12 +363,39 @@ function CardView({
   );
 }
 
-function MemberView({ data, justRedeemed }: { data: LoyaltyPayload; justRedeemed: string | null }) {
+function MemberView({
+  data,
+  phone,
+  justRedeemed,
+  onRedeemed,
+  onStale,
+}: {
+  data: LoyaltyPayload;
+  phone: string;
+  justRedeemed: string | null;
+  onRedeemed: React.ComponentProps<typeof RewardPicker>["onRedeemed"];
+  onStale: () => void;
+}) {
   const l = data.loyalty;
   if (!l.member) return null;
   return (
     <div className="flex flex-col gap-6">
       <MemberCard member={l.member} />
+      {/* Primary action right under the plan card, within thumb reach — not 2000px down the page. */}
+      <CtaLink href="/reservar" size="lg" block>
+        Reservar con mi plan
+      </CtaLink>
+      {/* Gifts earned before the plan started are still theirs to pick. */}
+      {l.pendingCycles.length > 0 && (
+        <RewardPicker
+          phone={phone}
+          pendingCycles={l.pendingCycles}
+          rewards={data.rewards}
+          onRedeemed={onRedeemed}
+          onStale={onStale}
+        />
+      )}
+      <RedemptionCodes redemptions={l.redemptions} highlight={justRedeemed} timezone={data.timezone} />
       <Message loyalty={l} />
       {l.enabled && (
         <StampCard
@@ -372,10 +412,6 @@ function MemberView({ data, justRedeemed }: { data: LoyaltyPayload; justRedeemed
           }
         />
       )}
-      <RedemptionCodes redemptions={l.redemptions} highlight={justRedeemed} timezone={data.timezone} />
-      <CtaLink href="/reservar" size="lg" block>
-        Reservar con mi plan
-      </CtaLink>
     </div>
   );
 }

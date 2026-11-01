@@ -177,6 +177,8 @@
 /* Hide the native scrollbar on the day strip but keep momentum scrolling. */
 .rb-days {
   scroll-snap-type: x proximity;
+  /* Snapped/scrolled-into-view chips stop clear of the faded edges. */
+  scroll-padding-inline: 16px 28px;
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%);

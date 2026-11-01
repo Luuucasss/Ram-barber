@@ -14,7 +14,7 @@ import type { CreatedBooking } from "./types";
 const SPARKS = Array.from({ length: 12 }, (_, i) => i * 30);
 
 const actionClass =
-  "rb-press inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl px-5 text-base font-semibold";
+  "rb-press inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl px-4 py-2 text-center text-base font-semibold leading-snug sm:px-5";
 
 export function SuccessStep({
   booking,
@@ -112,11 +112,11 @@ export function SuccessStep({
           ref={titleRef}
           tabIndex={-1}
           style={{ "--i": 4 } as React.CSSProperties}
-          className="font-gothic text-shimmer text-5xl leading-none outline-none sm:text-6xl"
+          className="font-gothic text-shimmer text-[2.75rem] leading-[0.95] outline-none min-[380px]:text-5xl sm:text-6xl"
         >
           ¡Turno confirmado!
         </h1>
-        <p style={{ "--i": 5 } as React.CSSProperties} className="mt-3 font-serif text-xl italic text-dim">
+        <p style={{ "--i": 5 } as React.CSSProperties} className="mt-3 font-serif text-xl italic text-dim [overflow-wrap:anywhere]">
           {firstName ? `Te esperamos, ${firstName}.` : "Te esperamos."}
         </p>
 
@@ -173,7 +173,7 @@ export function SuccessStep({
               href={whatsappLink(whatsapp, waText)}
               target="_blank"
               rel="noopener noreferrer"
-              className={cn(actionClass, "h-12 text-sm text-dim hover:bg-white/5 hover:text-ink")}
+              className={cn(actionClass, "min-h-12 text-sm text-dim hover:bg-white/5 hover:text-ink")}
             >
               <WhatsAppIcon className="h-4 w-4" /> Avisar por WhatsApp
             </a>
@@ -183,7 +183,7 @@ export function SuccessStep({
         <Link
           href="/"
           style={{ "--i": 8 } as React.CSSProperties}
-          className="mt-6 text-sm text-faint underline decoration-line-strong underline-offset-4 transition-colors hover:text-ink"
+          className="mt-3 inline-flex min-h-11 items-center px-4 text-sm text-faint underline decoration-line-strong underline-offset-4 transition-colors hover:text-ink"
         >
           Volver al inicio
         </Link>

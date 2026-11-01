@@ -2,6 +2,7 @@
 
 import { BadgeCheck, CalendarOff, ChevronRight, StickyNote } from "lucide-react";
 import { formatPrice } from "@/lib/format";
+import { formatPhone } from "@/lib/phone";
 import { toHHMM, toMinutes } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { StatusPill } from "@/components/admin/bookings/StatusPill";
@@ -55,9 +56,9 @@ export function AgendaList({
         if (!mine.length && !offs.length && !ranges.length) return null;
         return (
           <section key={barber._id} className="flex flex-col gap-2">
-            <h3 className="flex items-baseline justify-between gap-2 px-1">
-              <span className="font-semibold">{barber.name}</span>
-              <span className="text-xs text-faint">
+            <h3 className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 px-1">
+              <span className="min-w-0 truncate font-semibold">{barber.name}</span>
+              <span className="text-xs tabular-nums text-faint">
                 {ranges.length
                   ? ranges.map(([s, e]) => `${toHHMM(s)}–${toHHMM(e)}`).join(" · ")
                   : "Sin horario"}
@@ -125,7 +126,7 @@ function Row({
       type="button"
       onClick={() => onSelect(b)}
       className={cn(
-        "flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-transform duration-150 ease-out active:scale-[0.98]",
+        "flex min-h-16 w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-transform duration-150 ease-out active:scale-[0.98]",
         b.status === "confirmed" && "border-line-strong bg-card",
         b.status === "completed" && "border-line bg-surface",
         b.status === "no_show" && "border-line bg-surface",
@@ -138,17 +139,21 @@ function Row({
         <p className="mt-1 text-[11px] text-faint">{b.end}</p>
       </div>
       <div className="min-w-0 flex-1">
-        <p className={cn("flex items-center gap-1.5 truncate font-medium", b.status === "cancelled" && "line-through")}>
-          <span className="truncate">{b.clientName || b.clientPhone}</span>
-          {b.membershipApplied && <BadgeCheck className="h-3.5 w-3.5 shrink-0" aria-label="Membresía" />}
-          {b.notes && <StickyNote className="h-3.5 w-3.5 shrink-0 text-dim" aria-label="Tiene notas" />}
+        <p className={cn("flex items-start gap-1.5 font-medium leading-snug", b.status === "cancelled" && "line-through")}>
+          <span className="line-clamp-2 min-w-0 break-words">{b.clientName || formatPhone(b.clientPhone)}</span>
+          {b.membershipApplied && <BadgeCheck className="mt-[3px] h-3.5 w-3.5 shrink-0" aria-label="Membresía" />}
+          {b.notes && <StickyNote className="mt-[3px] h-3.5 w-3.5 shrink-0 text-dim" aria-label="Tiene notas" />}
         </p>
         <p className="truncate text-xs text-dim">
           {b.serviceName}
           {showBarber && ` · ${b.barberName}`} · {formatPrice(b.finalPrice, currency)}
         </p>
+        {/* Narrow phones: status under the details so the client name keeps its width. */}
+        {b.status !== "confirmed" && (
+          <StatusPill status={b.status} className="mt-1.5 px-2 py-px text-[11px] min-[400px]:hidden" />
+        )}
       </div>
-      {b.status !== "confirmed" && <StatusPill status={b.status} className="shrink-0" />}
+      {b.status !== "confirmed" && <StatusPill status={b.status} className="hidden shrink-0 min-[400px]:inline-flex" />}
       <ChevronRight className="h-4 w-4 shrink-0 text-faint" aria-hidden="true" />
     </button>
   );

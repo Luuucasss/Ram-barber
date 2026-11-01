@@ -2,8 +2,8 @@
 
 import { useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronUp, Clock, Crown, Pencil, Plus, Scissors, Trash2 } from "lucide-react";
-import { AdminPageHeader } from "@/components/admin/AdminShell";
-import { Button, Card, EmptyState, ErrorText, Field, Input, Pill, Textarea, Toggle } from "@/components/ui";
+import { AdminFab, AdminPageHeader } from "@/components/admin/AdminShell";
+import { Button, Card, EmptyState, ErrorText, Field, Input, Pill, Textarea } from "@/components/ui";
 import { api } from "@/lib/client-api";
 import { formatDuration, formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -14,10 +14,12 @@ import {
   ChipMultiSelect,
   ConfirmDialog,
   FormActions,
+  FormToggle,
   enter,
   errorMessage,
   fieldErrors,
   num,
+  revealFirstError,
   useFlip,
 } from "./parts";
 import { ToastProvider, useToast } from "./toast";
@@ -76,11 +78,14 @@ function Services({ initial, branches, currency }: Props) {
         title="Servicios"
         description="Lo que se puede reservar. El orden de esta lista es el que ven los clientes."
         actions={
-          <Button onClick={() => setEditing("new")}>
+          <Button onClick={() => setEditing("new")} className="hidden md:inline-flex">
             <Plus className="h-4 w-4" aria-hidden="true" /> Nuevo servicio
           </Button>
         }
       />
+      <AdminFab onClick={() => setEditing("new")} icon={<Plus className="h-5 w-5" aria-hidden="true" />}>
+        Nuevo servicio
+      </AdminFab>
 
       {col.items.length === 0 ? (
         <EmptyState title="Todavía no hay servicios" icon={<Scissors className="h-6 w-6" />}>
@@ -97,14 +102,19 @@ function Services({ initial, branches, currency }: Props) {
                   key={s._id}
                   ref={flipRef(s._id)}
                   style={e.style}
-                  className={cn(e.className, "relative flex items-center gap-2 bg-card px-2 py-3 sm:gap-3 sm:px-4")}
+                  // Phones: two rows — [info | switch] over [↑ ↓ | edit delete], all 44px targets.
+                  // sm+: a single row with the stacked chevrons on the left (grid placement is ignored by flex).
+                  className={cn(
+                    e.className,
+                    "relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 bg-card px-3 pb-1.5 pt-3 sm:flex sm:gap-3 sm:px-4 sm:py-3",
+                  )}
                 >
-                  <div className="flex flex-col">
+                  <div className="col-start-1 row-start-2 -ml-2 flex sm:ml-0 sm:flex-col">
                     <button
                       type="button"
                       onClick={() => move(i, -1)}
                       disabled={i === 0}
-                      className="rounded-lg p-1.5 text-dim transition-[color,background-color,transform] duration-150 hover:bg-white/5 hover:text-ink active:scale-90 disabled:pointer-events-none disabled:opacity-25"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-dim transition-[color,background-color,transform] duration-150 hover:bg-white/5 hover:text-ink active:scale-90 disabled:pointer-events-none disabled:opacity-25 sm:pointer-fine:h-auto sm:pointer-fine:w-auto sm:pointer-fine:p-1.5"
                       aria-label={`Subir ${s.name}`}
                     >
                       <ChevronUp className="h-4 w-4" />
@@ -113,7 +123,7 @@ function Services({ initial, branches, currency }: Props) {
                       type="button"
                       onClick={() => move(i, 1)}
                       disabled={i === col.items.length - 1}
-                      className="rounded-lg p-1.5 text-dim transition-[color,background-color,transform] duration-150 hover:bg-white/5 hover:text-ink active:scale-90 disabled:pointer-events-none disabled:opacity-25"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-dim transition-[color,background-color,transform] duration-150 hover:bg-white/5 hover:text-ink active:scale-90 disabled:pointer-events-none disabled:opacity-25 sm:pointer-fine:h-auto sm:pointer-fine:w-auto sm:pointer-fine:p-1.5"
                       aria-label={`Bajar ${s.name}`}
                     >
                       <ChevronDown className="h-4 w-4" />
@@ -123,10 +133,10 @@ function Services({ initial, branches, currency }: Props) {
                   <button
                     type="button"
                     onClick={() => setEditing(s)}
-                    className={cn("min-w-0 flex-1 text-left transition-opacity duration-200", !s.active && "opacity-55")}
+                    className={cn("col-start-1 row-start-1 min-w-0 flex-1 text-left transition-opacity duration-200", !s.active && "opacity-55")}
                   >
                     <span className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold">{s.name}</span>
+                      <span className="min-w-0 break-words font-semibold">{s.name}</span>
                       {s.includedInPlan && (
                         <Pill className="gap-1 px-2 py-0 text-[11px]">
                           <Crown className="h-3 w-3" aria-hidden="true" /> Plan
@@ -144,26 +154,28 @@ function Services({ initial, branches, currency }: Props) {
                       {where && (
                         <>
                           <span aria-hidden="true">·</span>
-                          <span className="truncate">{where}</span>
+                          <span className="min-w-0 truncate">{where}</span>
                         </>
                       )}
                     </span>
                     {s.description && <span className="mt-0.5 hidden truncate text-xs text-faint sm:block">{s.description}</span>}
                   </button>
 
-                  <ActiveSwitch
-                    checked={s.active}
-                    label={`${s.name} activo`}
-                    onToggle={async (active) => {
-                      await col.patchOptimistic(s._id, { active });
-                      toast(active ? `“${s.name}” se puede reservar.` : `“${s.name}” ya no se ofrece.`);
-                    }}
-                  />
-                  <div className="flex">
-                    <Button variant="ghost" size="icon" onClick={() => setEditing(s)} aria-label={`Editar ${s.name}`} className="hidden sm:inline-flex">
+                  <div className="col-start-2 row-start-1 flex justify-end">
+                    <ActiveSwitch
+                      checked={s.active}
+                      label={`${s.name} activo`}
+                      onToggle={async (active) => {
+                        await col.patchOptimistic(s._id, { active });
+                        toast(active ? `“${s.name}” se puede reservar.` : `“${s.name}” ya no se ofrece.`);
+                      }}
+                    />
+                  </div>
+                  <div className="col-start-2 row-start-2 -mr-2 flex justify-end sm:mr-0">
+                    <Button variant="ghost" size="icon" onClick={() => setEditing(s)} aria-label={`Editar ${s.name}`} className="h-11 w-11 sm:pointer-fine:h-10 sm:pointer-fine:w-10">
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeleting(s)} aria-label={`Eliminar ${s.name}`}>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleting(s)} aria-label={`Eliminar ${s.name}`} className="h-11 w-11 sm:pointer-fine:h-10 sm:pointer-fine:w-10">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -173,6 +185,8 @@ function Services({ initial, branches, currency }: Props) {
           </ul>
         </Card>
       )}
+      {/* Keeps the last row clear of the floating "Nuevo servicio" button on phones. */}
+      <div aria-hidden="true" className="h-16 md:hidden" />
 
       <CatalogModal open={editing !== null} onClose={() => setEditing(null)} title={editing === "new" ? "Nuevo servicio" : "Editar servicio"}>
         {editing !== null && (
@@ -246,6 +260,7 @@ function ServiceForm({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
     const errs: Record<string, string> = {};
     if (!name.trim()) errs.name = "Ingresá el nombre.";
     if (description.length > 400) errs.description = "Máximo 400 caracteres.";
@@ -253,7 +268,10 @@ function ServiceForm({
       errs.durationMin = "Entre 5 y 480 minutos, de a 5.";
     if (priceN === null || priceN < 0) errs.price = "Ingresá un precio válido.";
     setErrors(errs);
-    if (Object.keys(errs).length) return;
+    if (Object.keys(errs).length) {
+      revealFirstError(form);
+      return;
+    }
     setSaving(true);
     setFormError("");
     try {
@@ -269,6 +287,7 @@ function ServiceForm({
     } catch (err) {
       setErrors(fieldErrors(err));
       setFormError(errorMessage(err));
+      revealFirstError(form);
     } finally {
       setSaving(false);
     }
@@ -296,7 +315,7 @@ function ServiceForm({
                   aria-pressed={durationN === m}
                   onClick={() => setDuration(String(m))}
                   className={cn(
-                    "h-9 rounded-full border px-3.5 text-sm tabular-nums transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.97]",
+                    "h-11 rounded-full border px-4 text-sm tabular-nums sm:pointer-fine:h-9 sm:pointer-fine:px-3.5 transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.97]",
                     durationN === m ? "border-ink bg-ink font-medium text-bg" : "border-line-strong text-dim hover:border-ink hover:text-ink",
                   )}
                 >
@@ -344,9 +363,9 @@ function ServiceForm({
         )}
       </Field>
 
-      <div className="rounded-2xl border border-line bg-surface p-4">
-        <Toggle checked={includedInPlan} onChange={setIncludedInPlan} label="Incluido en planes de exclusividad" />
-        <p className="mt-2 text-xs text-faint">Los clientes con un plan activo lo reservan sin cargo (descuenta un corte del plan).</p>
+      <div className="rounded-2xl border border-line bg-surface px-4 py-2.5 sm:py-4">
+        <FormToggle checked={includedInPlan} onChange={setIncludedInPlan} label="Incluido en planes de exclusividad" />
+        <p className="mt-1 pb-1.5 text-xs text-faint sm:mt-2 sm:pb-0">Los clientes con un plan activo lo reservan sin cargo (descuenta un corte del plan).</p>
       </div>
 
       {branches.length > 1 && (
@@ -361,7 +380,7 @@ function ServiceForm({
         </fieldset>
       )}
 
-      <Toggle checked={active} onChange={setActive} label="Activo (se puede reservar)" />
+      <FormToggle checked={active} onChange={setActive} label="Activo (se puede reservar)" />
 
       <ErrorText>{formError}</ErrorText>
       <FormActions onCancel={onCancel} saving={saving} submitLabel={service ? "Guardar cambios" : "Crear servicio"} />

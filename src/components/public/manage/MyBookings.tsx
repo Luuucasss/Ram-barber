@@ -54,14 +54,19 @@ export function MyBookings({ whatsapp }: { whatsapp?: string }) {
     <PublicShell backHref="/" label="Mis turnos" whatsapp={whatsapp}>
       <header className="stagger mb-8 flex flex-col items-center gap-3 text-center">
         <Logo className="h-16 w-auto" />
-        <h1 className="font-gothic text-6xl leading-none text-ink" style={{ "--i": 1 } as React.CSSProperties}>
+        <h1
+          className="font-gothic text-[clamp(2.75rem,15vw,3.75rem)] leading-none text-ink"
+          style={{ "--i": 1 } as React.CSSProperties}
+        >
           Mis turnos
         </h1>
-        <p className="max-w-xs font-serif text-lg italic text-dim" style={{ "--i": 2 } as React.CSSProperties}>
+        <p className="max-w-xs text-balance font-serif text-lg italic text-dim" style={{ "--i": 2 } as React.CSSProperties}>
           {result
-            ? result.firstName
-              ? `Hola, ${result.firstName}. Estos son tus turnos.`
-              : "Estos son tus turnos."
+            ? result.upcoming.length + result.past.length === 0
+              ? "No encontramos turnos con este teléfono."
+              : result.firstName
+                ? `Hola, ${result.firstName}. Estos son tus turnos.`
+                : "Estos son tus turnos."
             : "Ingresá tu teléfono y te mostramos tus reservas."}
         </p>
       </header>
@@ -72,10 +77,10 @@ export function MyBookings({ whatsapp }: { whatsapp?: string }) {
         </Card>
       ) : (
         <div className="flex flex-col gap-8">
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card px-4 py-3 text-sm">
-            <span className="inline-flex items-center gap-2 text-dim">
-              <Smartphone className="h-4 w-4" aria-hidden="true" />
-              <span className="tabular-nums text-ink">{formatPhone(phone)}</span>
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card py-1 pl-4 pr-1 text-sm">
+            <span className="inline-flex min-w-0 items-center gap-2 text-dim">
+              <Smartphone className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="truncate tabular-nums text-ink">{formatPhone(phone)}</span>
             </span>
             <button
               type="button"
@@ -83,7 +88,7 @@ export function MyBookings({ whatsapp }: { whatsapp?: string }) {
                 setResult(null);
                 setError("");
               }}
-              className="font-medium text-dim underline-offset-4 transition-colors hover:text-ink hover:underline"
+              className="inline-flex min-h-11 shrink-0 items-center rounded-xl px-3 font-medium text-dim underline-offset-4 transition-colors hover:text-ink hover:underline active:bg-white/5"
             >
               Cambiar
             </button>
@@ -139,12 +144,19 @@ export function MyBookings({ whatsapp }: { whatsapp?: string }) {
         </Section>
       )}
 
-      <div className="mt-10 flex flex-col items-center gap-4">
-        <OrnamentDivider />
-        <CtaLink href="/reservar" variant={result && !next ? "outline" : "primary"} size="lg" block>
-          <CalendarCheck2 className="h-5 w-5" /> Reservar nuevo turno
-        </CtaLink>
-      </div>
+      {/* With no upcoming booking the empty state already carries this CTA: don't repeat it. */}
+      {result && !next ? (
+        <div className="mt-10 flex justify-center">
+          <OrnamentDivider />
+        </div>
+      ) : (
+        <div className="mt-10 flex flex-col items-center gap-4">
+          <OrnamentDivider />
+          <CtaLink href="/reservar" size="lg" block>
+            <CalendarCheck2 className="h-5 w-5" /> Reservar nuevo turno
+          </CtaLink>
+        </div>
+      )}
     </PublicShell>
   );
 }
@@ -165,32 +177,35 @@ function NextBooking({ booking, today }: { booking: PublicBooking; today: string
       <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-dim">Tu próximo turno</h2>
       <Link
         href={`/turno/${booking.token}`}
-        className="group relative block overflow-hidden rounded-[22px] border border-ink/80 bg-card-2 p-5 shadow-[0_20px_60px_-30px_rgba(255,255,255,0.35)] transition-[transform,border-color] duration-200 ease-out hover:border-ink active:scale-[0.985]"
+        className="group relative block overflow-hidden rounded-[22px] border border-ink/80 bg-card-2 p-4 min-[360px]:p-5 shadow-[0_20px_60px_-30px_rgba(255,255,255,0.35)] transition-[transform,border-color] duration-200 ease-out hover:border-ink active:scale-[0.985]"
       >
         <div className="pointer-events-none absolute -right-28 -top-28 opacity-[0.12]" aria-hidden="true">
           <HaloRays size={320} rays={44} className="animate-spin-slow" />
         </div>
-        <div className="relative flex items-center gap-4">
-          <div className="flex h-[84px] w-[72px] shrink-0 flex-col items-center justify-center rounded-2xl bg-ink text-bg">
+        <div className="relative flex items-center gap-3.5 min-[360px]:gap-4">
+          <div className="flex h-[76px] w-[64px] shrink-0 flex-col items-center justify-center rounded-2xl bg-ink text-bg min-[360px]:h-[84px] min-[360px]:w-[72px]">
             <span className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-70">{chip.day}</span>
             <span className="font-serif text-4xl font-semibold leading-none">{chip.num}</span>
             <span className="text-[11px] uppercase tracking-widest opacity-60">{chip.month}</span>
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-dim">{relativeDay(booking.date, today)}</p>
-            <p className="font-serif text-4xl font-semibold leading-none tabular-nums">{booking.start} hs</p>
+            <p className="text-sm font-medium leading-snug text-dim [overflow-wrap:anywhere]">{relativeDay(booking.date, today)}</p>
+            <p className="whitespace-nowrap font-serif text-[2rem] font-semibold leading-none tabular-nums min-[360px]:text-4xl">
+              {booking.start} hs
+            </p>
             <p className="mt-1 truncate text-sm text-ink">
               {booking.serviceName}
               {booking.barberName ? <span className="text-dim"> · {booking.barberName}</span> : null}
             </p>
           </div>
         </div>
-        <div className="relative mt-4 flex items-center justify-between gap-3 border-t border-dashed border-line-strong pt-3.5 text-sm">
-          <span className="inline-flex min-w-0 items-center gap-1.5 text-dim">
-            <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="truncate">{booking.branchName}</span>
+        {/* Wraps instead of truncating: on narrow phones the CTA drops to its own line. */}
+        <div className="relative mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-dashed border-line-strong pt-3.5 text-sm">
+          <span className="inline-flex min-w-0 items-start gap-1.5 text-dim">
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="[overflow-wrap:anywhere]">{booking.branchName}</span>
           </span>
-          <span className="inline-flex shrink-0 items-center font-semibold text-ink">
+          <span className="ml-auto inline-flex shrink-0 items-center font-semibold text-ink">
             {booking.canModify ? "Cambiar o cancelar" : "Ver detalle"}
             <ChevronRight className="h-4 w-4 transition-transform duration-200 ease-out group-hover:translate-x-0.5" />
           </span>
@@ -206,20 +221,22 @@ function DeviceRow({ entry, today, style }: { entry: SavedBooking; today: string
     <Link
       href={`/turno/${entry.token}`}
       style={style}
-      className="group flex items-center gap-4 rounded-[var(--radius-card)] border border-dashed border-line-strong p-3 pr-4 transition-[transform,border-color] duration-200 ease-out hover:border-ink active:scale-[0.985]"
+      className="group flex items-center gap-3 rounded-[var(--radius-card)] border border-dashed border-line-strong p-3 pr-3 transition-[transform,border-color] duration-200 ease-out hover:border-ink active:scale-[0.985] min-[360px]:gap-4 min-[360px]:pr-4"
     >
       <div className="flex h-14 w-12 shrink-0 flex-col items-center justify-center rounded-xl border border-line">
         <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-dim">{chip.day}</span>
         <span className="font-serif text-xl font-semibold leading-none">{chip.num}</span>
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-medium">{relativeDay(entry.date, today)}</p>
+        <p className="font-medium leading-snug [overflow-wrap:anywhere]">{relativeDay(entry.date, today)}</p>
         <p className="inline-flex items-center gap-1 text-sm text-dim">
           <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {entry.start} hs
         </p>
       </div>
-      <span className="inline-flex items-center text-xs font-medium text-dim transition-colors group-hover:text-ink">
-        Cambiar o cancelar <ChevronRight className="h-3.5 w-3.5" />
+      <span className="inline-flex shrink-0 items-center text-xs font-medium text-dim transition-colors group-hover:text-ink">
+        <span className="hidden min-[400px]:inline">Cambiar o cancelar</span>
+        <span className="min-[400px]:hidden">Ver</span>
+        <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
       </span>
     </Link>
   );

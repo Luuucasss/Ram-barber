@@ -43,13 +43,17 @@ export function LoyaltyPanel({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 font-semibold">
-            <Rose size={18} tone="light" /> Tarjeta de fidelidad
+            <Rose size={18} tone="light" className="shrink-0" /> Tarjeta de fidelidad
           </h2>
           <p className="mt-0.5 text-sm text-dim">
             Tarjeta #{cycle} · {loyalty.totalCuts} cortes en total
           </p>
         </div>
-        {!loyalty.enabled && <Pill tone="warn">Programa desactivado</Pill>}
+        {!loyalty.enabled && (
+          <Pill tone="neutral" className="shrink-0 border-dashed">
+            Programa desactivado
+          </Pill>
+        )}
       </div>
 
       <ol
@@ -102,10 +106,11 @@ export function LoyaltyPanel({
         </p>
       ) : null}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         <ConfirmButton
           size="sm"
           variant="outline"
+          className="h-12 sm:h-9"
           onConfirm={() => onAdjust(1)}
           loading={busy === "adjust:1"}
           disabled={!!busy}
@@ -116,6 +121,7 @@ export function LoyaltyPanel({
         <ConfirmButton
           size="sm"
           variant="ghost"
+          className="h-12 sm:h-9"
           onConfirm={() => onAdjust(-1)}
           loading={busy === "adjust:-1"}
           disabled={!!busy || !canRemove}
@@ -134,16 +140,16 @@ export function LoyaltyPanel({
           {pending.map((c) => (
             <div
               key={`p-${c}`}
-              className="flex items-center gap-3 rounded-xl border border-warn/30 bg-warn/5 px-3 py-2.5 text-sm"
+              className="flex items-center gap-3 rounded-xl border border-dashed border-ink/50 bg-white/[0.04] px-3 py-2.5 text-sm"
             >
-              <Gift className="h-4 w-4 shrink-0 text-warn" aria-hidden="true" />
+              <Gift className="h-4 w-4 shrink-0 text-ink" aria-hidden="true" />
               <span className="flex-1">
                 Tarjeta #{c} completa <span className="text-dim">· falta que elija su regalo</span>
               </span>
             </div>
           ))}
           {sortedRedemptions.map((r) => (
-            <div key={r._id} className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5 text-sm">
+            <div key={r._id} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-line px-3 py-2.5 text-sm">
               <Gift className={cn("h-4 w-4 shrink-0", r.deliveredAt ? "text-faint" : "text-ink")} aria-hidden="true" />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">{r.rewardName}</p>
@@ -152,14 +158,14 @@ export function LoyaltyPanel({
                 </p>
               </div>
               {r.deliveredAt ? (
-                <Pill tone="ok" className="shrink-0">
+                <Pill tone="neutral" className="shrink-0 border-ink/60 text-ink">
                   Entregado {stamp(r.deliveredAt).split(" ")[0]}
                 </Pill>
               ) : (
                 <Button
                   size="sm"
                   variant="subtle"
-                  className="shrink-0"
+                  className="h-11 shrink-0 max-sm:w-full sm:h-9"
                   onClick={() => onDeliver(r._id)}
                   loading={busy === `deliver:${r._id}`}
                   disabled={!!busy}

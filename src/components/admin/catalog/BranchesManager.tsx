@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { ExternalLink, MapPin, Pencil, Phone, Plus, Store, Trash2 } from "lucide-react";
-import { AdminPageHeader } from "@/components/admin/AdminShell";
-import { Button, Card, EmptyState, ErrorText, Field, Input, Pill, Toggle } from "@/components/ui";
+import { AdminFab, AdminPageHeader } from "@/components/admin/AdminShell";
+import { Button, Card, EmptyState, ErrorText, Field, Input, Pill } from "@/components/ui";
 import { cn } from "@/lib/utils";
-import { ActiveSwitch, CatalogModal, ConfirmDialog, FormActions, enter, errorMessage, fieldErrors, isHttpUrl, num } from "./parts";
+import { ActiveSwitch, CatalogModal, ConfirmDialog, FormActions, FormToggle, enter, errorMessage, fieldErrors, isHttpUrl, num, revealFirstError } from "./parts";
 import { ToastProvider, useToast } from "./toast";
 import type { BranchItem } from "./types";
 import { byOrderName, useCollection } from "./use-collection";
@@ -32,18 +32,21 @@ function Branches({ initial, barberCount }: Props) {
         title="Sucursales"
         description="Los locales donde se atiende. Cada barbero pertenece a una."
         actions={
-          <Button onClick={() => setEditing("new")}>
+          <Button onClick={() => setEditing("new")} className="hidden md:inline-flex">
             <Plus className="h-4 w-4" aria-hidden="true" /> Nueva sucursal
           </Button>
         }
       />
+      <AdminFab onClick={() => setEditing("new")} icon={<Plus className="h-5 w-5" aria-hidden="true" />}>
+        Nueva sucursal
+      </AdminFab>
 
       {col.items.length === 0 ? (
         <EmptyState title="Todavía no hay sucursales" icon={<Store className="h-6 w-6" />}>
           Creá la primera para poder cargar barberos.
         </EmptyState>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {col.items.map((b, i) => {
             const e = enter(i);
             const barbers = barberCount[b._id] ?? 0;
@@ -68,31 +71,37 @@ function Branches({ initial, barberCount }: Props) {
                     }}
                   />
                 </div>
-                <div className="flex flex-col gap-1.5 text-sm text-dim">
-                  <p className="flex items-start gap-2">
+                <div className="flex min-w-0 flex-col gap-1.5 text-sm text-dim">
+                  <p className="flex min-w-0 items-start gap-2 break-words">
                     <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                    {b.address || <span className="text-faint">Sin dirección</span>}
+                    <span className="min-w-0">{b.address || <span className="text-faint">Sin dirección</span>}</span>
                   </p>
-                  <p className="flex items-center gap-2">
+                  <p className="flex min-w-0 items-center gap-2">
                     <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    {b.phone || <span className="text-faint">Sin teléfono</span>}
+                    {b.phone ? (
+                      <a href={`tel:${b.phone.replace(/[^\d+]/g, "")}`} className="min-w-0 truncate underline-offset-4 hover:underline">
+                        {b.phone}
+                      </a>
+                    ) : (
+                      <span className="text-faint">Sin teléfono</span>
+                    )}
                   </p>
                   {b.mapsUrl && (
                     <a
                       href={b.mapsUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex w-fit items-center gap-2 text-ink underline-offset-4 hover:underline"
+                      className="inline-flex min-h-11 w-fit items-center gap-2 text-ink underline-offset-4 hover:underline sm:pointer-fine:min-h-0"
                     >
                       <ExternalLink className="h-4 w-4" aria-hidden="true" /> Ver en Google Maps
                     </a>
                   )}
                 </div>
                 <div className="mt-auto flex gap-2 pt-1">
-                  <Button variant="subtle" size="sm" className="flex-1" onClick={() => setEditing(b)}>
+                  <Button variant="subtle" size="sm" className="h-11 flex-1 sm:pointer-fine:h-9" onClick={() => setEditing(b)}>
                     <Pencil className="h-3.5 w-3.5" aria-hidden="true" /> Editar
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setDeleting(b)} aria-label={`Eliminar ${b.name}`}>
+                  <Button variant="ghost" size="sm" className="h-11 w-11 sm:pointer-fine:h-9 sm:pointer-fine:w-auto" onClick={() => setDeleting(b)} aria-label={`Eliminar ${b.name}`}>
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 </div>
@@ -101,6 +110,8 @@ function Branches({ initial, barberCount }: Props) {
           })}
         </div>
       )}
+      {/* Keeps the last card clear of the floating "Nueva sucursal" button on phones. */}
+      <div aria-hidden="true" className="h-16 md:hidden" />
 
       <CatalogModal open={editing !== null} onClose={() => setEditing(null)} title={editing === "new" ? "Nueva sucursal" : "Editar sucursal"}>
         {editing !== null && (
@@ -164,13 +175,17 @@ function BranchForm({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
     const errs: Record<string, string> = {};
     if (!name.trim()) errs.name = "Ingresá el nombre.";
     if (mapsUrl.trim() && !mapsOk) errs.mapsUrl = "Pegá el link completo (https://maps.app.goo.gl/…).";
     const orderN = order.trim() === "" ? undefined : num(order);
     if (orderN === null || (orderN !== undefined && !Number.isInteger(orderN))) errs.order = "Número entero.";
     setErrors(errs);
-    if (Object.keys(errs).length) return;
+    if (Object.keys(errs).length) {
+      revealFirstError(form);
+      return;
+    }
     setSaving(true);
     setFormError("");
     try {
@@ -185,6 +200,7 @@ function BranchForm({
     } catch (err) {
       setErrors(fieldErrors(err));
       setFormError(errorMessage(err));
+      revealFirstError(form);
     } finally {
       setSaving(false);
     }
@@ -203,7 +219,7 @@ function BranchForm({
         error={errors.mapsUrl}
         hint={
           mapsOk ? (
-            <a href={mapsUrl.trim()} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-ink underline underline-offset-4">
+            <a href={mapsUrl.trim()} target="_blank" rel="noreferrer" className="-my-3.5 inline-flex items-center gap-1 py-3.5 text-ink underline underline-offset-4 sm:pointer-fine:my-0 sm:pointer-fine:py-0">
               Probar link <ExternalLink className="h-3 w-3" aria-hidden="true" />
             </a>
           ) : (
@@ -216,6 +232,8 @@ function BranchForm({
             id={id}
             type="url"
             inputMode="url"
+            autoCapitalize="none"
+            autoCorrect="off"
             value={mapsUrl}
             onChange={(e) => setMapsUrl(e.target.value)}
             placeholder="https://maps.app.goo.gl/…"
@@ -223,15 +241,17 @@ function BranchForm({
           />
         )}
       </Field>
-      <div className="grid gap-4 sm:grid-cols-[1fr_120px]">
+      <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-3 sm:grid-cols-[1fr_120px] sm:gap-4">
         <Field label="Teléfono" error={errors.phone}>
-          {(id) => <Input id={id} type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={40} placeholder="351 370 4782" />}
+          {(id) => (
+            <Input id={id} type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={40} placeholder="351 370 4782" />
+          )}
         </Field>
         <Field label="Orden" hint="Menor = primero" error={errors.order}>
           {(id) => <Input id={id} inputMode="numeric" value={order} onChange={(e) => setOrder(e.target.value)} placeholder="Auto" />}
         </Field>
       </div>
-      <Toggle checked={active} onChange={setActive} label="Activa (aparece para reservar)" />
+      <FormToggle checked={active} onChange={setActive} label="Activa (aparece para reservar)" />
       <ErrorText>{formError}</ErrorText>
       <FormActions onCancel={onCancel} saving={saving} submitLabel={branch ? "Guardar cambios" : "Crear sucursal"} />
     </form>

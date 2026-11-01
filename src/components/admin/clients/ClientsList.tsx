@@ -101,14 +101,17 @@ export function ClientsList() {
             type="search"
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
-            placeholder="Buscar por nombre o teléfono  ( / )"
-            className="h-11 rounded-xl pl-9 text-sm"
+            placeholder="Buscar por nombre o teléfono"
+            aria-keyshortcuts="/"
+            title="Atajo: /"
+            enterKeyHint="search"
+            className="h-11 rounded-xl pl-9 text-base sm:text-sm"
           />
         </label>
         <Select
           value={sort}
           onChange={(e) => setParams({ sort: e.target.value })}
-          className="h-11 rounded-xl text-sm sm:w-48"
+          className="h-11 rounded-xl text-base sm:w-48 sm:text-sm"
           aria-label="Ordenar por"
         >
           {SORTS.map(([v, l]) => (
@@ -145,7 +148,7 @@ export function ClientsList() {
                 <li key={c._id}>
                   <Link
                     href={`/admin/clientes/${c._id}`}
-                    className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-4 py-3 transition-colors duration-150 hover:bg-card-2 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_repeat(3,72px)_minmax(0,1fr)_96px_20px]"
+                    className="grid min-h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-4 py-3 transition-colors duration-150 hover:bg-card-2 active:bg-card-2 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_repeat(3,72px)_minmax(0,1fr)_96px_20px]"
                   >
                     <span className="flex min-w-0 items-center gap-2">
                       <span className="truncate font-medium">{c.name || "Sin nombre"}</span>
@@ -154,12 +157,12 @@ export function ClientsList() {
                           <BadgeCheck className="h-3 w-3" aria-hidden="true" /> Socio
                         </span>
                       )}
-                      {c.pendingGifts > 0 && <Gift className="h-3.5 w-3.5 shrink-0 text-warn" aria-label="Regalo pendiente" />}
+                      {c.pendingGifts > 0 && <Gift className="h-3.5 w-3.5 shrink-0 text-ink" aria-label="Regalo pendiente" />}
                     </span>
                     <span className="text-right text-sm tabular-nums text-dim md:text-left">{formatPhone(c.phone)}</span>
                     <span className="hidden text-right tabular-nums md:block">{c.stats.bookings}</span>
                     <span className="hidden text-right tabular-nums md:block">{c.stats.completed}</span>
-                    <span className={cn("hidden text-right tabular-nums md:block", c.stats.noShows ? "text-warn" : "text-faint")}>
+                    <span className={cn("hidden text-right tabular-nums md:block", c.stats.noShows ? "text-ink underline decoration-dashed underline-offset-4" : "text-faint")}>
                       {c.stats.noShows}
                     </span>
                     <span className="text-xs text-dim md:text-sm">

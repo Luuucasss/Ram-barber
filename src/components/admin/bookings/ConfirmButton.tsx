@@ -24,7 +24,8 @@ export function ConfirmButton({
     <Button
       {...props}
       type="button"
-      variant={armed ? "danger" : variant}
+      // Armed = inverted solid ink (black & white design: no red), unmistakably different from idle.
+      variant={armed ? "primary" : variant}
       aria-live="polite"
       onBlur={() => setArmed(false)}
       onClick={() => {
@@ -37,7 +38,7 @@ export function ConfirmButton({
         if (timer.current) clearTimeout(timer.current);
         timer.current = setTimeout(() => setArmed(false), 4000);
       }}
-      className={cn(armed && "border-bad bg-bad/10", className)}
+      className={cn(armed && "ring-2 ring-ink/40 ring-offset-2 ring-offset-card", className)}
     >
       {armed ? confirmLabel : children}
     </Button>

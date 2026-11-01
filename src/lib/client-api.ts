@@ -28,7 +28,12 @@ export async function api<T>(url: string, opts: { method?: string; body?: unknow
   }
   const json = await res.json().catch(() => null);
   if (!json?.ok) {
-    if (res.status === 401 && typeof window !== "undefined" && window.location.pathname.startsWith("/admin")) {
+    if (
+      res.status === 401 &&
+      typeof window !== "undefined" &&
+      window.location.pathname.startsWith("/admin") &&
+      !window.location.pathname.startsWith("/admin/login")
+    ) {
       window.location.href = `/admin/login?next=${encodeURIComponent(window.location.pathname)}`;
     }
     throw new ApiClientError(

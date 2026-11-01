@@ -84,6 +84,13 @@
     transform: none;
   }
 }
+/* Touch screens have no hover: always show the "Reservar" affordance so rows read as tappable. */
+@media (hover: none), (pointer: coarse) {
+  .rh-row .rh-row-arrow {
+    opacity: 1;
+    transform: none;
+  }
+}
 
 /* Scroll reveal (toggled by <Reveal>). Transitions, so a fast scroll never restarts anything. */
 [data-reveal] {

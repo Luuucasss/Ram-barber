@@ -31,7 +31,7 @@ export function BookingRow({
       href={`/turno/${booking.token}`}
       style={style}
       className={cn(
-        "group flex items-center gap-4 rounded-[var(--radius-card)] border border-line bg-card p-3 pr-4",
+        "group flex items-center gap-3 rounded-[var(--radius-card)] border border-line bg-card p-3 min-[360px]:gap-4 min-[360px]:pr-4",
         "transition-[transform,border-color,background-color] duration-200 ease-out hover:border-line-strong hover:bg-card-2 active:scale-[0.985]",
         className,
       )}
@@ -47,20 +47,27 @@ export function BookingRow({
         <span className="text-[10px] uppercase tracking-widest text-faint">{chip.month}</span>
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className={cn("truncate font-medium", dimmed ? "text-dim" : "text-ink")}>
-            {relativeDay(booking.date, today)} · {booking.start} hs
-          </p>
-        </div>
+        {/* Date and time on their own lines (like the hero) so the month is never cut off. */}
+        <p className="text-sm font-medium leading-snug text-dim [overflow-wrap:anywhere]">
+          {relativeDay(booking.date, today)}
+        </p>
+        <p
+          className={cn(
+            "font-serif text-xl font-semibold leading-tight tabular-nums",
+            dimmed ? "text-dim" : "text-ink",
+          )}
+        >
+          {booking.start} hs
+        </p>
         <p className="truncate text-sm text-dim">
           {booking.serviceName}
           {booking.barberName ? ` con ${booking.barberName}` : ""}
         </p>
-        <div className="mt-1.5 flex items-center justify-between gap-2">
-          <Pill tone={pill.tone} className="py-0 text-[11px]">
+        <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+          <Pill tone={pill.tone} className={cn("py-0 text-[11px]", pill.className)}>
             {pill.label}
           </Pill>
-          <span className="inline-flex items-center text-xs font-medium text-dim transition-colors group-hover:text-ink">
+          <span className="ml-auto inline-flex items-center whitespace-nowrap text-xs font-medium text-dim transition-colors group-hover:text-ink">
             {cta}
             <ChevronRight className="h-3.5 w-3.5 transition-transform duration-200 ease-out group-hover:translate-x-0.5" />
           </span>

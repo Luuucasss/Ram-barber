@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { Crown, Gift, Minus, Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertCircle, Crown, Gift, Minus, Pencil, Plus, Trash2 } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminShell";
-import { Button, Card, EmptyState, ErrorText, Field, Input, Pill, Textarea, Toggle } from "@/components/ui";
+import { Button, Card, EmptyState, ErrorText, Field, Input, Pill, Textarea } from "@/components/ui";
 import { api } from "@/lib/client-api";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ import {
   CharCount,
   ConfirmDialog,
   FormActions,
+  FormToggle,
   ImagePreview,
   SectionHeading,
   enter,
@@ -21,6 +22,7 @@ import {
   fieldErrors,
   isHttpUrl,
   num,
+  revealFirstError,
 } from "./parts";
 import { StampCardPreview } from "./StampCardPreview";
 import { ToastProvider, useToast } from "./toast";
@@ -151,9 +153,9 @@ function LoyaltyRules({ settings, onSave }: { settings: AppSettings; onSave: (l:
         title="Reglas de la tarjeta"
         description="Cada turno completado suma un sello. En los sellos marcados el cliente obtiene un beneficio."
       />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
         <Card className="flex flex-col gap-5 p-4 sm:p-5">
-          <Toggle
+          <FormToggle
             checked={draft.enabled}
             onChange={(enabled) => setDraft((d) => ({ ...d, enabled }))}
             label="Tarjeta de fidelidad activa"
@@ -170,6 +172,7 @@ function LoyaltyRules({ settings, onSave }: { settings: AppSettings; onSave: (l:
                   type="button"
                   variant="ghost"
                   size="icon"
+                  className="h-11 w-11 sm:pointer-fine:h-10 sm:pointer-fine:w-10"
                   onClick={() => setDraft((d) => ({ ...d, cardSize: Math.max(2, d.cardSize - 1) }))}
                   disabled={draft.cardSize <= 2}
                   aria-label="Un sello menos"
@@ -183,6 +186,7 @@ function LoyaltyRules({ settings, onSave }: { settings: AppSettings; onSave: (l:
                   type="button"
                   variant="ghost"
                   size="icon"
+                  className="h-11 w-11 sm:pointer-fine:h-10 sm:pointer-fine:w-10"
                   onClick={() => setDraft((d) => ({ ...d, cardSize: Math.min(30, d.cardSize + 1) }))}
                   disabled={draft.cardSize >= 30}
                   aria-label="Un sello más"
@@ -197,13 +201,13 @@ function LoyaltyRules({ settings, onSave }: { settings: AppSettings; onSave: (l:
               {draft.steps.length === 0 && <p className="text-sm text-faint">Sin beneficios: la tarjeta solo cuenta visitas.</p>}
               {draft.steps.map((s, i) => (
                 <div key={s.key} className="animate-[fade_180ms_ease-out_both] rounded-2xl border border-line bg-surface p-3">
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:gap-y-2">
                     <label className="flex items-center gap-2 text-sm text-dim">
                       Sello
                       <select
                         value={s.position}
                         onChange={(e) => patchStep(s.key, { position: e.target.value })}
-                        className="h-10 rounded-xl border border-line bg-bg px-3 text-sm tabular-nums text-ink focus:border-ink focus:outline-none"
+                        className="h-11 rounded-xl border border-line bg-bg px-3 text-base tabular-nums text-ink focus:border-ink focus:outline-none sm:pointer-fine:h-10 sm:pointer-fine:text-sm"
                       >
                         {Array.from({ length: Math.max(draft.cardSize, Number(s.position) || 1) }, (_, p) => (
                           <option key={p + 1} value={p + 1}>
@@ -219,27 +223,32 @@ function LoyaltyRules({ settings, onSave }: { settings: AppSettings; onSave: (l:
                           value={s.percent}
                           onChange={(e) => patchStep(s.key, { percent: e.target.value.replace(/\D/g, "").slice(0, 3) })}
                           aria-label="Porcentaje de descuento"
-                          className="h-10 w-20 rounded-xl border border-line bg-bg pl-3 pr-7 text-sm tabular-nums text-ink focus:border-ink focus:outline-none"
+                          className="h-11 w-20 rounded-xl border border-line bg-bg pl-3 pr-7 text-base tabular-nums text-ink focus:border-ink focus:outline-none sm:pointer-fine:h-10 sm:pointer-fine:text-sm"
                         />
                         <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-faint">%</span>
                       </span>
                       off
                     </label>
-                    <Toggle checked={s.gift} onChange={(gift) => patchStep(s.key, { gift })} label={<span className="text-dim">Regalo</span>} />
+                    <FormToggle checked={s.gift} onChange={(gift) => patchStep(s.key, { gift })} label={<span className="text-dim">Regalo</span>} />
                     <button
                       type="button"
                       onClick={() => setDraft((d) => ({ ...d, steps: d.steps.filter((x) => x.key !== s.key) }))}
-                      className="ml-auto rounded-lg p-2 text-faint transition-colors hover:bg-white/5 hover:text-ink"
+                      className="-mr-1.5 ml-auto inline-flex h-11 w-11 items-center justify-center rounded-lg text-faint transition-colors hover:bg-white/5 hover:text-ink sm:pointer-fine:mr-0 sm:pointer-fine:h-auto sm:pointer-fine:w-auto sm:pointer-fine:p-2"
                       aria-label={`Quitar beneficio del sello ${s.position}`}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
-                  {stepErrors[i] && <p className="mt-2 text-xs text-bad">{stepErrors[i]}</p>}
+                  {stepErrors[i] && (
+                    <p className="mt-2 flex items-start gap-1.5 text-xs font-medium text-ink" role="alert">
+                      <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                      {stepErrors[i]}
+                    </p>
+                  )}
                 </div>
               ))}
               {draft.steps.length < draft.cardSize && (
-                <Button type="button" variant="outline" size="sm" className="w-fit" onClick={addStep}>
+                <Button type="button" variant="outline" size="sm" className="h-11 w-full sm:w-fit sm:pointer-fine:h-9" onClick={addStep}>
                   <Plus className="h-3.5 w-3.5" aria-hidden="true" /> Agregar beneficio
                 </Button>
               )}
@@ -250,14 +259,30 @@ function LoyaltyRules({ settings, onSave }: { settings: AppSettings; onSave: (l:
           </div>
 
           <ErrorText>{error}</ErrorText>
-          <div className="flex items-center justify-end gap-2 border-t border-line pt-4">
-            <span className={cn("mr-auto text-xs text-warn transition-opacity duration-200", dirty ? "opacity-100" : "opacity-0")} aria-live="polite">
-              {dirty ? "Cambios sin guardar" : ""}
+          {/* While there are unsaved changes the save row floats at the bottom of the screen (above the
+              admin tab bar) for as long as this card is on screen, so it stays in thumb reach after
+              tweaking the stepper or a benefit far above it. */}
+          <div
+            className={cn(
+              "flex flex-wrap items-center justify-end gap-2 border-t border-line pt-4",
+              dirty &&
+                "sticky bottom-[calc(var(--admin-tabbar-h,0px)+0.75rem)] z-20 -mx-2 animate-[fade_180ms_ease-out_both] rounded-2xl border border-line-strong bg-card-2 p-3 shadow-[0_-10px_60px_-20px_rgba(0,0,0,0.9)] sm:-mx-3",
+            )}
+          >
+            <span
+              className={cn(
+                "mr-auto flex items-center gap-2 text-xs text-ink transition-opacity duration-200 max-sm:w-full",
+                dirty ? "opacity-100" : "opacity-0 max-sm:hidden",
+              )}
+              aria-live="polite"
+            >
+              {dirty && <span className="h-2 w-2 shrink-0 rounded-full bg-ink" aria-hidden="true" />}
+              {dirty ? (valid ? "Tenés cambios sin guardar" : "Revisá los beneficios marcados") : ""}
             </span>
-            <Button variant="ghost" size="sm" onClick={() => setDraft(toDraft(settings.loyalty))} disabled={!dirty || saving}>
+            <Button variant="ghost" size="sm" className="h-11 max-sm:flex-1 sm:pointer-fine:h-9" onClick={() => setDraft(toDraft(settings.loyalty))} disabled={!dirty || saving}>
               Descartar
             </Button>
-            <Button size="sm" onClick={save} loading={saving} disabled={!dirty || !valid}>
+            <Button size="sm" className="h-11 max-sm:flex-[2] sm:pointer-fine:h-9" onClick={save} loading={saving} disabled={!dirty || !valid}>
               Guardar reglas
             </Button>
           </div>
@@ -285,7 +310,7 @@ function Rewards({ initial }: { initial: RewardItem[] }) {
         title="Regalos"
         description="Lo que el cliente puede elegir al llegar a un sello con regalo."
         actions={
-          <Button variant="outline" size="sm" onClick={() => setEditing("new")}>
+          <Button variant="outline" size="sm" className="h-11 sm:pointer-fine:h-9" onClick={() => setEditing("new")}>
             <Plus className="h-4 w-4" aria-hidden="true" /> Nuevo regalo
           </Button>
         }
@@ -295,7 +320,7 @@ function Rewards({ initial }: { initial: RewardItem[] }) {
           Agregá al menos uno si tu tarjeta tiene sellos con regalo.
         </EmptyState>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {col.items.map((r, i) => {
             const e = enter(i);
             const outOfStock = r.stock === 0;
@@ -316,14 +341,14 @@ function Rewards({ initial }: { initial: RewardItem[] }) {
                   </div>
                   {r.description && <p className="line-clamp-2 text-xs text-dim">{r.description}</p>}
                   <div className="mt-auto flex items-center gap-2 pt-2">
-                    <Pill tone={outOfStock ? "bad" : "neutral"} className="px-2 py-0 text-[11px]">
+                    <Pill tone={outOfStock ? "ink" : "neutral"} className="px-2 py-0 text-[11px]">
                       {r.stock === null ? "Ilimitado" : outOfStock ? "Sin stock" : `Stock: ${r.stock}`}
                     </Pill>
-                    <div className="ml-auto flex">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditing(r)} aria-label={`Editar ${r.name}`}>
+                    <div className="-mb-1.5 -mr-1.5 ml-auto flex sm:pointer-fine:m-0 sm:pointer-fine:ml-auto">
+                      <Button variant="ghost" size="icon" className="h-11 w-11 sm:pointer-fine:h-8 sm:pointer-fine:w-8" onClick={() => setEditing(r)} aria-label={`Editar ${r.name}`}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleting(r)} aria-label={`Eliminar ${r.name}`}>
+                      <Button variant="ghost" size="icon" className="h-11 w-11 sm:pointer-fine:h-8 sm:pointer-fine:w-8" onClick={() => setDeleting(r)} aria-label={`Eliminar ${r.name}`}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -390,13 +415,17 @@ function RewardForm({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
     const errs: Record<string, string> = {};
     if (!name.trim()) errs.name = "Ingresá el nombre.";
     if (imageUrl.trim() && !isHttpUrl(imageUrl.trim())) errs.imageUrl = "Tiene que ser un link que empiece con https://";
     const stockN = num(stock);
     if (!unlimited && (stockN === null || !Number.isInteger(stockN) || stockN < 0)) errs.stock = "Cantidad entera (0 o más).";
     setErrors(errs);
-    if (Object.keys(errs).length) return;
+    if (Object.keys(errs).length) {
+      revealFirstError(form);
+      return;
+    }
     setSaving(true);
     setFormError("");
     try {
@@ -410,6 +439,7 @@ function RewardForm({
     } catch (err) {
       setErrors(fieldErrors(err));
       setFormError(errorMessage(err));
+      revealFirstError(form);
     } finally {
       setSaving(false);
     }
@@ -423,25 +453,25 @@ function RewardForm({
       <Field label="Descripción" hint={<CharCount value={description} max={300} />}>
         {(id) => <Textarea id={id} rows={2} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={300} />}
       </Field>
-      <div className="flex items-start gap-4">
-        <Field label="Imagen (URL)" error={errors.imageUrl} className="flex-1">
+      <div className="flex items-start gap-3 sm:gap-4">
+        <Field label="Imagen (URL)" error={errors.imageUrl} className="min-w-0 flex-1">
           {(id) => (
-            <Input id={id} type="url" inputMode="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" aria-invalid={!!errors.imageUrl} />
+            <Input id={id} type="url" inputMode="url" autoCapitalize="none" autoCorrect="off" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" aria-invalid={!!errors.imageUrl} />
           )}
         </Field>
-        <ImagePreview url={imageUrl.trim()} className="mt-6 h-20 w-20 shrink-0 [&_img]:grayscale" />
+        <ImagePreview url={imageUrl.trim()} className="mt-6 h-16 w-16 shrink-0 sm:h-20 sm:w-20 [&_img]:grayscale" />
       </div>
-      <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
-        <Toggle checked={unlimited} onChange={setUnlimited} label="Stock ilimitado" />
+      <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface px-4 py-2 sm:gap-3 sm:py-4">
+        <FormToggle checked={unlimited} onChange={setUnlimited} label="Stock ilimitado" />
         {!unlimited && (
-          <Field label="Unidades disponibles" error={errors.stock} hint="Se descuenta una por cada canje." className="animate-[fade_160ms_ease-out_both]">
+          <Field label="Unidades disponibles" error={errors.stock} hint="Se descuenta una por cada canje." className="animate-[fade_160ms_ease-out_both] pb-2 sm:pb-0">
             {(id) => (
               <Input id={id} inputMode="numeric" value={stock} onChange={(e) => setStock(e.target.value.replace(/\D/g, ""))} className="w-32 tabular-nums" aria-invalid={!!errors.stock} />
             )}
           </Field>
         )}
       </div>
-      <Toggle checked={active} onChange={setActive} label="Activo (se puede elegir)" />
+      <FormToggle checked={active} onChange={setActive} label="Activo (se puede elegir)" />
       <ErrorText>{formError}</ErrorText>
       <FormActions onCancel={onCancel} saving={saving} submitLabel={reward ? "Guardar cambios" : "Crear regalo"} />
     </form>
@@ -478,14 +508,14 @@ function Plans({
         title="Planes de exclusividad"
         description="Abonos mensuales: el cliente paga por adelantado y reserva sin cargo los servicios incluidos."
         actions={
-          <Button variant="outline" size="sm" onClick={() => setEditing("new")}>
+          <Button variant="outline" size="sm" className="h-11 sm:pointer-fine:h-9" onClick={() => setEditing("new")}>
             <Plus className="h-4 w-4" aria-hidden="true" /> Nuevo plan
           </Button>
         }
       />
 
-      <Card className="mb-4 flex flex-col gap-1 p-4">
-        <Toggle
+      <Card className="mb-4 flex flex-col gap-1 px-4 py-2.5 sm:py-4">
+        <FormToggle
           checked={membershipEnabled}
           onChange={(v) => {
             onMembershipChange(v)
@@ -494,7 +524,7 @@ function Plans({
           }}
           label="Planes de exclusividad habilitados"
         />
-        <p className="pl-14 text-xs text-faint">
+        <p className="pb-1.5 pl-14 text-xs text-faint sm:pb-0">
           {membershipEnabled ? "Los clientes con plan activo no pagan los servicios incluidos." : "Desactivado: nadie recibe el beneficio del plan, aunque lo tenga asignado."}
         </p>
       </Card>
@@ -504,7 +534,7 @@ function Plans({
           Ejemplo: “Plan Ram” · 4 cortes por mes.
         </EmptyState>
       ) : (
-        <div className={cn("grid gap-3 transition-opacity duration-200 sm:grid-cols-2 xl:grid-cols-3", !membershipEnabled && "opacity-60")}>
+        <div className={cn("grid grid-cols-1 gap-3 transition-opacity duration-200 sm:grid-cols-2 xl:grid-cols-3", !membershipEnabled && "opacity-60")}>
           {col.items.map((p, i) => {
             const e = enter(i);
             const unit = perCut(p.price, p.cuts);
@@ -513,9 +543,9 @@ function Plans({
               <Card key={p._id} style={e.style} className={cn(e.className, "flex flex-col gap-3 p-4 transition-opacity duration-200", !p.active && "opacity-60")}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h3 className="flex items-center gap-2 truncate font-semibold">
+                    <h3 className="flex min-w-0 items-center gap-2 font-semibold">
                       <Crown className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      {p.name}
+                      <span className="truncate">{p.name}</span>
                     </h3>
                     <p className="mt-0.5 text-sm text-dim">
                       {p.cuts} {p.cuts === 1 ? "corte" : "cortes"} por mes
@@ -535,16 +565,16 @@ function Plans({
                   <p className="text-xs tabular-nums text-dim">
                     {formatPrice(unit, currency)} por corte
                     {saving !== null && saving > 0 && reference && (
-                      <span className="text-ok"> · {saving}% menos que {reference.name}</span>
+                      <span className="font-medium text-ink"> · {saving}% menos que {reference.name}</span>
                     )}
                   </p>
                 </div>
                 {p.description && <p className="text-sm text-dim">{p.description}</p>}
                 <div className="mt-auto flex gap-2">
-                  <Button variant="subtle" size="sm" className="flex-1" onClick={() => setEditing(p)}>
+                  <Button variant="subtle" size="sm" className="h-11 flex-1 sm:pointer-fine:h-9" onClick={() => setEditing(p)}>
                     <Pencil className="h-3.5 w-3.5" aria-hidden="true" /> Editar
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setDeleting(p)} aria-label={`Eliminar ${p.name}`}>
+                  <Button variant="ghost" size="sm" className="h-11 w-11 sm:pointer-fine:h-9 sm:pointer-fine:w-auto" onClick={() => setDeleting(p)} aria-label={`Eliminar ${p.name}`}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -621,12 +651,16 @@ function PlanForm({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
     const errs: Record<string, string> = {};
     if (!name.trim()) errs.name = "Ingresá el nombre.";
     if (cutsN === null || !Number.isInteger(cutsN) || cutsN < 1 || cutsN > 60) errs.cuts = "Entre 1 y 60 cortes.";
     if (priceN === null || priceN < 0) errs.price = "Ingresá un precio válido.";
     setErrors(errs);
-    if (Object.keys(errs).length) return;
+    if (Object.keys(errs).length) {
+      revealFirstError(form);
+      return;
+    }
     setSaving(true);
     setFormError("");
     try {
@@ -634,6 +668,7 @@ function PlanForm({
     } catch (err) {
       setErrors(fieldErrors(err));
       setFormError(errorMessage(err));
+      revealFirstError(form);
     } finally {
       setSaving(false);
     }
@@ -644,7 +679,7 @@ function PlanForm({
       <Field label="Nombre" error={errors.name}>
         {(id) => <Input id={id} value={name} onChange={(e) => setName(e.target.value)} maxLength={80} autoFocus placeholder="Plan Ram" aria-invalid={!!errors.name} />}
       </Field>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 items-end gap-3">
         <Field label="Cortes por mes" error={errors.cuts}>
           {(id) => <Input id={id} inputMode="numeric" value={cuts} onChange={(e) => setCuts(e.target.value.replace(/\D/g, ""))} className="tabular-nums" aria-invalid={!!errors.cuts} />}
         </Field>
@@ -657,12 +692,12 @@ function PlanForm({
           )}
         </Field>
       </div>
-      <div className="flex items-baseline justify-between rounded-2xl border border-line bg-surface px-4 py-3" aria-live="polite">
-        <span className="text-sm text-dim">Precio por corte</span>
-        <span className="text-right">
+      <div className="flex items-baseline justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3" aria-live="polite">
+        <span className="shrink-0 text-sm text-dim">Precio por corte</span>
+        <span className="min-w-0 text-right">
           <span className="text-lg font-semibold tabular-nums">{unit !== null ? formatPrice(unit, currency) : "—"}</span>
           {unit !== null && reference && reference.price > 0 && unit < reference.price && (
-            <span className="block text-xs text-ok">
+            <span className="block text-xs font-medium text-ink">
               {Math.round((1 - unit / reference.price) * 100)}% menos que {reference.name} ({formatPrice(reference.price, currency)})
             </span>
           )}
@@ -671,7 +706,7 @@ function PlanForm({
       <Field label="Descripción" hint={<CharCount value={description} max={300} />}>
         {(id) => <Textarea id={id} rows={2} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={300} placeholder="Qué incluye, condiciones…" />}
       </Field>
-      <Toggle checked={active} onChange={setActive} label="Activo (se ofrece a clientes)" />
+      <FormToggle checked={active} onChange={setActive} label="Activo (se ofrece a clientes)" />
       <ErrorText>{formError}</ErrorText>
       <FormActions onCancel={onCancel} saving={saving} submitLabel={plan ? "Guardar cambios" : "Crear plan"} />
     </form>

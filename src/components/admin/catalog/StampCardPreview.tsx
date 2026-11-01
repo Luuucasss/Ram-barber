@@ -32,13 +32,12 @@ export function StampCardPreview({
       )}
       aria-label="Vista previa de la tarjeta de fidelidad"
     >
-      <Rose size={140} tone="dark" className="pointer-events-none absolute -right-10 -top-10 opacity-40" />
-      <div className="relative flex items-end justify-between gap-3">
-        <div className="leading-none">
-          <p className="font-gothic text-4xl">{first || "Ram"}</p>
-          {rest.length > 0 && <p className="mt-1 text-[9px] uppercase tracking-[0.4em] text-dim">{rest.join(" ")}</p>}
-        </div>
-        <p className="font-serif text-sm italic text-dim">Tarjeta de fidelidad</p>
+      {/* The rose owns the top-right corner; all header text stays on the left so nothing sits under it. */}
+      <Rose size={140} tone="dark" className="pointer-events-none absolute -right-10 -top-10 opacity-40 max-[359px]:-right-14 max-[359px]:-top-14" />
+      <div className="relative max-w-[calc(100%-5.5rem)] leading-none">
+        <p className="break-words font-gothic text-4xl max-[359px]:text-3xl">{first || "Ram"}</p>
+        {rest.length > 0 && <p className="mt-1 text-[9px] uppercase tracking-[0.4em] text-dim">{rest.join(" ")}</p>}
+        <p className="mt-2 font-serif text-sm italic text-dim">Tarjeta de fidelidad</p>
       </div>
 
       <div className="relative mt-5 grid gap-2.5" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
